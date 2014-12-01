@@ -753,10 +753,7 @@ bool TrigBjetFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i) 
 
 HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::TriggerElement* outputTE) 
 {
-    if(msgLvl() <= MSG::DEBUG)
-    {
-  	msg() << MSG::DEBUG << "Executing TrigBjetFex" << endreq;
-    }
+    ATH_MSG_DEBUG("Executing TrigBjetFex");
 
     // Clear and initialize data members
     m_totSelTracks = 0;
@@ -775,16 +772,13 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     // Get RoI descriptor
     // -----------------------------------
     const TrigRoiDescriptor* roiDescriptor = 0;
-    if(getFeature(outputTE, roiDescriptor, m_jetKey) == HLT::OK) 
-    {
-	ATH_MSG_DEBUG("Using TE: " << "RoI id " << roiDescriptor->roiId()
-		<< ", Phi = " <<  roiDescriptor->phi() << ", Eta = " << roiDescriptor->eta());
-    }
-    else 
+    if(getFeature(inputTE, roiDescriptor, m_jetKey) != HLT::OK) 
     {
 	ATH_MSG_DEBUG("No feature for this Trigger Element");    	
-    	return HLT::NAV_ERROR;
+    	return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
     }
+    ATH_MSG_DEBUG("Using TE: " << "RoI id " << roiDescriptor->roiId()
+	    << ", Phi = " <<  roiDescriptor->phi() << ", Eta = " << roiDescriptor->eta());
   
     // -----------------------------------
     // Get EF jets JDC::---> Can I extract any other EF object? Muon, electron, MET? 
@@ -793,10 +787,10 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     if(m_retrieveHLTJets && m_instance == "EF") 
     {
 	std::vector<const TrigOperationalInfo*> m_vectorOperationalInfo;
-    	if(getFeatures(outputTE, m_vectorOperationalInfo, "EFJetInfo") != HLT::OK) 
+    	if(getFeatures(inputTE, m_vectorOperationalInfo, "EFJetInfo") != HLT::OK) 
 	{
 	    ATH_MSG_WARNING("Failed to get TrigOperationalInfo");
-	    return HLT::MISSING_FEATURE;
+	    return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
       	}
 	else 
     	{
@@ -815,10 +809,10 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     		unsigned int m_etSize = (*m_operationalInfo)->infos().first.size();
     		// JDC:: I think by construction, this case it cannot be... not sure
 		//     	 look at TrigOperationalInfo implementation
-		if (m_etSize!=1) 
+		if(m_etSize!=1) 
     		{
      		    ATH_MSG_WARNING("More than one Et threshold associated to the same EF jet");
-		    return HLT::NAV_ERROR;
+    		    return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
     		}
     		m_et_EFjet = (*m_operationalInfo)->get("EFJetEt");
 	    }
@@ -834,8 +828,7 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     ATH_MSG_DEBUG( "pass 1 " << m_et_EFjet);
   
     const xAOD::JetContainer* jets(0); // JDC:: Check this initialization, shoudn't be "const ... * jet = 0;"?
-    //HLT::ErrorCode ec = getFeature(outputTE, jets,"EFJet");
-    HLT::ErrorCode ec = getFeature(outputTE, jets, m_jetKey);
+    HLT::ErrorCode ec = getFeature(inputTE, jets, m_jetKey);
     if(ec!=HLT::OK) 
     {
         ATH_MSG_WARNING("Failed to get JetCollection");
@@ -848,44 +841,44 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     if(jets == 0)
     {
         ATH_MSG_WARNING("Jet collection pointer is 0");
-        return HLT::ERROR;
+        return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::UNKNOWN);;
     }
  
     std::vector<const xAOD::Jet*> theJets(jets->begin(), jets->end());
     std::size_t njets = theJets.size();
-    ATH_MSG_DEBUG("pass 2 jet size: " << njets);
+    ATH_MSG_DEBUG("pass 2| jet size: " << njets);
   
     if( njets == 0 )
     {
         ATH_MSG_DEBUG("JetCollection is empty");
-        return HLT::OK;
-    } 
-    else 
-    {
-        ATH_MSG_DEBUG("JetCollection contains " << njets <<"jets");
+        return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
     }
+    ATH_MSG_DEBUG("JetCollection contains " << njets <<"jets");
   
     if(njets > 1)
     {
         ATH_MSG_DEBUG("Something is wrong, it should not be more than one jet");
-        // JDC:: Shouln't return? 
+	return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::NAV_ERROR);
     }
   
-    // JDC:: range-for loop (since C++11).. nice :)
-    for(const xAOD::Jet* aJet : theJets) 
-    {    
-        ATH_MSG_DEBUG("et  " << aJet->p4().Et() << " and eta " << aJet->p4().Eta());
+    if(msgLvl() <= MSG::DEBUG)
+    {
+	for(const xAOD::Jet* aJet : theJets) 
+    	{ 
+	    static int i=0;   
+    	    ATH_MSG_DEBUG("  ["<<i<<"-Jet]: Et=" << aJet->p4().Et() << "(GeV), Eta=" << aJet->p4().Eta());
+    	}
     }
   
     // -----------------------------------
     // Retrieve beamspot information
     // -----------------------------------
-    IBeamCondSvc* m_iBeamCondSvc = 0; // JDC:: FIXED initialization =0
+    IBeamCondSvc* m_iBeamCondSvc = 0;
     StatusCode sc = service("BeamCondSvc", m_iBeamCondSvc);
   
     if(sc.isFailure() || m_iBeamCondSvc == 0) 
     {
-    	m_iBeamCondSvc = 0; // JDC:: just in case sc.isFailure but no m_iBeamCondSvc null
+    	m_iBeamCondSvc = 0;
         ATH_MSG_WARNING("Could not retrieve Beam Conditions Service. ");
     } 
     else 
@@ -938,7 +931,6 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     // -----------------------------------
     // Get EF track collection 
     // -----------------------------------
-    //HLT::ErrorCode status = getFeature(outputTE, pointerToEFTrackCollections, "");
     HLT::ErrorCode status = getFeature(outputTE, pointerToEFTrackCollections);
     if(status != HLT::OK) 
     {
@@ -1233,7 +1225,7 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     if(!m_trigEFBjetColl) 
     {
 	ATH_MSG_ERROR("Feature TrigEFBjetContainer not found");
-       	return HLT::BAD_JOB_SETUP;
+       	return HLT::ErrorCode(HLT::Action::ABORT_JOB, HLT::Reason::BAD_JOB_SETUP);
     }
     
     HLT::ErrorCode stat = attachFeature(outputTE, m_trigEFBjetColl, "EFBjetFex");
@@ -1269,7 +1261,7 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     if(!m_trigBTaggingContainer) 
     {
     	ATH_MSG_ERROR("Feature BTaggingContainer not found");
-    	return HLT::BAD_JOB_SETUP;
+       	return HLT::ErrorCode(HLT::Action::ABORT_JOB, HLT::Reason::BAD_JOB_SETUP);
     }
   
     stat = attachFeature(outputTE, m_trigBTaggingContainer, "HLTBjetFex");
