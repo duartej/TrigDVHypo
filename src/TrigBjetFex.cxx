@@ -782,7 +782,7 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     }
     else 
     {
-	ATH__MSG_DEBUG("No feature for this Trigger Element");    	
+	ATH_MSG_DEBUG("No feature for this Trigger Element");    	
     	return HLT::NAV_ERROR;
     }
   
@@ -831,414 +831,454 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     m_trigBjetJetInfo->setEtJet(m_et_EFjet);
   
     //xAOD jets from TE
-   ATH_MSG_DEBUG( "pass 1 " << m_et_EFjet);
+    ATH_MSG_DEBUG( "pass 1 " << m_et_EFjet);
+  
+    const xAOD::JetContainer* jets(0); // JDC:: Check this initialization, shoudn't be "const ... * jet = 0;"?
+    //HLT::ErrorCode ec = getFeature(outputTE, jets,"EFJet");
+    HLT::ErrorCode ec = getFeature(outputTE, jets, m_jetKey);
+    if(ec!=HLT::OK) 
+    {
+        ATH_MSG_WARNING("Failed to get JetCollection");
+        return ec;
+    } 
+    
+    ATH_MSG_DEBUG("Obtained JetContainer");
+    ATH_MSG_DEBUG("pass 2 " << &jets);
+  
+    if(jets == 0)
+    {
+        ATH_MSG_WARNING("Jet collection pointer is 0");
+        return HLT::ERROR;
+    }
  
-   const xAOD::JetContainer* jets(0); // JDC:: Check this initialization, shoudn't be "const ... * jet = 0;"?
-   //HLT::ErrorCode ec = getFeature(outputTE, jets,"EFJet");
-   HLT::ErrorCode ec = getFeature(outputTE, jets, m_jetKey);
-   if(ec!=HLT::OK) 
-   {
-       ATH_MSG_WARNING("Failed to get JetCollection");
-       return ec;
-   } 
+    std::vector<const xAOD::Jet*> theJets(jets->begin(), jets->end());
+    std::size_t njets = theJets.size();
+    ATH_MSG_DEBUG("pass 2 jet size: " << njets);
+  
+    if( njets == 0 )
+    {
+        ATH_MSG_DEBUG("JetCollection is empty");
+        return HLT::OK;
+    } 
+    else 
+    {
+        ATH_MSG_DEBUG("JetCollection contains " << njets <<"jets");
+    }
+  
+    if(njets > 1)
+    {
+        ATH_MSG_DEBUG("Something is wrong, it should not be more than one jet");
+        // JDC:: Shouln't return? 
+    }
+  
+    // JDC:: range-for loop (since C++11).. nice :)
+    for(const xAOD::Jet* aJet : theJets) 
+    {    
+        ATH_MSG_DEBUG("et  " << aJet->p4().Et() << " and eta " << aJet->p4().Eta());
+    }
+  
+    // -----------------------------------
+    // Retrieve beamspot information
+    // -----------------------------------
+    IBeamCondSvc* m_iBeamCondSvc = 0; // JDC:: FIXED initialization =0
+    StatusCode sc = service("BeamCondSvc", m_iBeamCondSvc);
+  
+    if(sc.isFailure() || m_iBeamCondSvc == 0) 
+    {
+    	m_iBeamCondSvc = 0; // JDC:: just in case sc.isFailure but no m_iBeamCondSvc null
+        ATH_MSG_WARNING("Could not retrieve Beam Conditions Service. ");
+    } 
+    else 
+    {
+     	Amg::Vector3D m_beamSpot = m_iBeamCondSvc->beamPos();
+     	int m_beamSpotBitMap = m_iBeamCondSvc->beamStatus();
+     	// Check if beam spot is from online algorithms
+	int m_beamSpotStatus = ((m_beamSpotBitMap & 0x4) == 0x4);
+     	// Check if beam spot fit converged
+	if(m_beamSpotStatus)
+	{
+	    // and update
+	    m_beamSpotStatus = ((m_beamSpotBitMap & 0x3) == 0x3);
+	}
+        ATH_MSG_DEBUG("Beam spot from service: x=" << m_beamSpot.x() 
+		<< ", y=" << m_beamSpot.y() << ", z=" << m_beamSpot.z() 
+    		<< ", tiltXZ=" << m_iBeamCondSvc->beamTilt(0) << ", tiltYZ=" 
+		<< m_iBeamCondSvc->beamTilt(1) << ", sigmaX=" 
+		<< m_iBeamCondSvc->beamSigma(0) << ", sigmaY=" 
+		<< m_iBeamCondSvc->beamSigma(1) << ", sigmaZ=" 
+		<< m_iBeamCondSvc->beamSigma(2) << ", status=" << m_beamSpotStatus);
+        
+	// Update Primary vertex info class with beam spot position, tilt and width
+	m_trigBjetPrmVtxInfo->setBeamSpot(m_beamSpot.x(), m_beamSpot.y(), m_beamSpot.z());
+       	m_trigBjetPrmVtxInfo->setBeamSpotTilt(m_iBeamCondSvc->beamTilt(0), m_iBeamCondSvc->beamTilt(1));
+    	m_trigBjetPrmVtxInfo->setBeamSpotWidth(m_iBeamCondSvc->beamSigma(0), 
+		m_iBeamCondSvc->beamSigma(1), m_iBeamCondSvc->beamSigma(2));
+    	m_trigBjetPrmVtxInfo->setBeamSpotStatus(m_beamSpotStatus);
+
+        ATH_MSG_DEBUG(*m_trigBjetPrmVtxInfo);
+    }
    
-   ATH_MSG_DEBUG("Obtained JetContainer");
-   ATH_MSG_DEBUG("pass 2 " << &jets);
- 
-   if(jets == 0)
-   {
-       ATH_MSG_WARNING("Jet collection pointer is 0");
-       return HLT::ERROR;
-   }
-
-  std::vector<const xAOD::Jet*> theJets(jets->begin(), jets->end());
-  ATH_MSG_DEBUG("pass 2 jet size: " << theJets.size());
-
-  std::size_t njets = theJets.size();
-  if( njets == 0 ){
-    ATH_MSG_DEBUG("JetCollection is empty");
-    return HLT::OK;
-  } else {
-    ATH_MSG_DEBUG("JetCollection contains " << njets <<"jets");
-  }
-
-  if(njets > 1)
-    ATH_MSG_DEBUG("Something is wrong, it should not be more than one jet");
-
-  for (const xAOD::Jet* aJet : theJets) {
-    double etjet = aJet->p4().Et();
-    double etajet = aJet->p4().Eta();
-
-    msg() << MSG::DEBUG << "et  " << etjet << " and eta " << etajet << endreq;
-  }
-
-  // -----------------------------------
-  // Retrieve beamspot information
-  // -----------------------------------
-      IBeamCondSvc* m_iBeamCondSvc; 
-  StatusCode sc = service("BeamCondSvc", m_iBeamCondSvc);
-
-  if (sc.isFailure() || m_iBeamCondSvc == 0) {
-    m_iBeamCondSvc = 0;
-
-    if (msgLvl() <= MSG::WARNING)
-      msg() << MSG::WARNING << "Could not retrieve Beam Conditions Service. " << endreq;
-
-  } 
-  else {
+    // -----------------------------------
+    // Create collections
+    // -----------------------------------
+    m_trigEFBjetColl = new TrigEFBjetContainer();
+   
+    xAOD::BTaggingAuxContainer trigBjetAuxContainer;
+    m_trigBTaggingContainer = new xAOD::BTaggingContainer();
+    m_trigBTaggingContainer->setStore(&trigBjetAuxContainer);
     
-    Amg::Vector3D m_beamSpot = m_iBeamCondSvc->beamPos();
-    
-    int m_beamSpotBitMap = m_iBeamCondSvc->beamStatus();
-    
-    // Check if beam spot is from online algorithms
-    int m_beamSpotStatus = ((m_beamSpotBitMap & 0x4) == 0x4);
-    
-    // Check if beam spot fit converged
-    if (m_beamSpotStatus)
-      m_beamSpotStatus = ((m_beamSpotBitMap & 0x3) == 0x3);
-    
-    if(msgLvl() <= MSG::DEBUG)
-      
-      msg() << MSG::DEBUG << "Beam spot from service: x=" << m_beamSpot.x() << ", y=" << m_beamSpot.y() << ", z=" << m_beamSpot.z() 
-            << ", tiltXZ=" << m_iBeamCondSvc->beamTilt(0) << ", tiltYZ=" << m_iBeamCondSvc->beamTilt(1) 
-            << ", sigmaX=" << m_iBeamCondSvc->beamSigma(0) << ", sigmaY=" << m_iBeamCondSvc->beamSigma(1) << ", sigmaZ=" << m_iBeamCondSvc->beamSigma(2) 
-            << ", status=" << m_beamSpotStatus << endreq;
+    // Create pointers to collections
+    const xAOD::TrackParticleContainer* pointerToEFTrackCollections = 0;
 
-    m_trigBjetPrmVtxInfo->setBeamSpot(m_beamSpot.x(), m_beamSpot.y(), m_beamSpot.z());
-    m_trigBjetPrmVtxInfo->setBeamSpotTilt(m_iBeamCondSvc->beamTilt(0), m_iBeamCondSvc->beamTilt(1));
-    m_trigBjetPrmVtxInfo->setBeamSpotWidth(m_iBeamCondSvc->beamSigma(0), m_iBeamCondSvc->beamSigma(1), m_iBeamCondSvc->beamSigma(2));
-    m_trigBjetPrmVtxInfo->setBeamSpotStatus(m_beamSpotStatus);
+    // Create pointers to TrigVertex collection
+    //const TrigVertexCollection*          pointerToPrmVtxCollections = 0;
+    const xAOD::VertexContainer*          pointerToEFPrmVtxCollections = 0;
+    const Trk::VxSecVertexInfoContainer*  pointerToEFSecVtxCollections = 0;
 
-    if (msgLvl() <= MSG::DEBUG)
-      msg() << MSG::DEBUG << *m_trigBjetPrmVtxInfo << endreq;
-
-  }
-
-  // -----------------------------------
-  // Create collections
-  // -----------------------------------
-  m_trigEFBjetColl = new TrigEFBjetContainer();
-
-  xAOD::BTaggingAuxContainer trigBjetAuxContainer;
-  m_trigBTaggingContainer = new xAOD::BTaggingContainer();
-  m_trigBTaggingContainer->setStore(&trigBjetAuxContainer);
- 
-  // Create pointers to collections
-  const xAOD::TrackParticleContainer* pointerToEFTrackCollections = 0;
-
-  // Create pointers to TrigVertex collection
-  //const TrigVertexCollection*          pointerToPrmVtxCollections = 0;
-  const xAOD::VertexContainer*          pointerToEFPrmVtxCollections = 0;
-  const Trk::VxSecVertexInfoContainer*  pointerToEFSecVtxCollections = 0;
-
-  // -----------------------------------
-  // Get EF track collection 
-  // -----------------------------------
-  //HLT::ErrorCode status = getFeature(outputTE, pointerToEFTrackCollections, "");
-  HLT::ErrorCode status = getFeature(outputTE, pointerToEFTrackCollections);
-  if (status != HLT::OK) {
-    msg() << MSG::DEBUG << "No HLT track collection retrieved" << endreq;
-  } 
-  else if (msgLvl() <= MSG::DEBUG)
-    msg() << MSG::DEBUG << "HLT track collection retrieved" << endreq;
-
-  // -----------------------------------
-  // Get secondary vertex collection 
-  // -----------------------------------
-  if (getSecVtxCollection(pointerToEFSecVtxCollections, outputTE) != HLT::OK) {
-    msg() << MSG::DEBUG << "No secondary vertex collection retrieved" << endreq;
-  } 
-  else if (msgLvl() <= MSG::DEBUG)
-    msg() << MSG::DEBUG << "Secondary vertex collection retrieved" << endreq;
-  
-  // -----------------------------------
-  // Get primary vertex collection
-  // -----------------------------------
-
-  float m_xPrmVtx=0, m_yPrmVtx=0, m_zPrmVtx=0;
-
-  if (m_histoPrmVtxAtEF) {   // PV from TrigT2HistoPrmVtx
-
-    if (getPrmVtxCollection(pointerToEFPrmVtxCollections, outputTE) != HLT::OK) {
-      msg() << MSG::DEBUG << "No primary vertex collection retrieved" << endreq;
+    // -----------------------------------
+    // Get EF track collection 
+    // -----------------------------------
+    //HLT::ErrorCode status = getFeature(outputTE, pointerToEFTrackCollections, "");
+    HLT::ErrorCode status = getFeature(outputTE, pointerToEFTrackCollections);
+    if(status != HLT::OK) 
+    {
+     	ATH_MSG_DEBUG("No HLT track collection retrieved");
     } 
-    else if (msgLvl() <= MSG::DEBUG) {
-      msg() << MSG::DEBUG << "Primary vertex collection retrieved" << endreq;
+    else
+    {
+	ATH_MSG_DEBUG("HLT track collection retrieved");
     }
-
-    // Protect against null pointers
-    if(pointerToEFPrmVtxCollections) {
-
-      // Protect against empty vectors
-      if(pointerToEFPrmVtxCollections->size()>0) {
-	const xAOD::Vertex* prmVertex = (*pointerToEFPrmVtxCollections)[0];
-        m_zPrmVtx = prmVertex->z();
-      } 
-      else {
-        msg() << MSG::DEBUG << "Empty primary vertex collection retrieved" << endreq;
-        m_zPrmVtx = 0;
-      }
+    // -----------------------------------
+    // Get secondary vertex collection 
+    // -----------------------------------
+    if(getSecVtxCollection(pointerToEFSecVtxCollections, outputTE) != HLT::OK) 
+    {
+	ATH_MSG_DEBUG("No secondary vertex collection retrieved");
     } 
-    else {
-      msg() << MSG::DEBUG << "No primary vertex collection retrieved" << endreq;
-      m_zPrmVtx = 0;
+    else
+    {
+	ATH_MSG_DEBUG("Secondary vertex collection retrieved");
     }
-  }
-  else  {  // PV from ID tracking
+  
+    // -----------------------------------
+    // Get primary vertex collection
+    // -----------------------------------
+    float m_xPrmVtx=0, m_yPrmVtx=0, m_zPrmVtx=0;
+    if(m_histoPrmVtxAtEF)     // PV from TrigT2HistoPrmVtx
+    {   
+      	if(getPrmVtxCollection(pointerToEFPrmVtxCollections, outputTE) != HLT::OK) 
+	{
+	    ATH_MSG_DEBUG("No primary vertex collection retrieved");
+     	}
+      	else
+	{
+	    ATH_MSG_DEBUG("Primary vertex collection retrieved");
+    	}
+    	// Protect against null pointers
+	if(pointerToEFPrmVtxCollections) 
+	{
+	    // Protect against empty vectors
+	    if(pointerToEFPrmVtxCollections->size()>0) 
+	    {
+	        //const xAOD::Vertex* prmVertex = (*pointerToEFPrmVtxCollections)[0];
+		for(const xAOD::Vertex * prmVertex : *pointerToEFPrmVtxCollections)
+		{
+    		    if(prmVertex->vertexType() == xAOD::VxType::PriVtx)
+		    {
+			m_zPrmVtx = (float)(prmVertex->z());
+			// we get the first one primary vertex
+			break;
+		    }
+		}
+            }
+      	    else 
+	    {
+	  	msg() << MSG::DEBUG << "Empty primary vertex collection retrieved" << endreq;
+	 	m_zPrmVtx = 0;  // JDC:: Redundant
+      	    }
+    	} 
+    	else 
+	{
+      	    msg() << MSG::DEBUG << "No primary vertex collection retrieved" << endreq;
+      	    m_zPrmVtx = 0;  // JDC:: REduntant
+    	}
+    }
+    else          // PV from ID tracking JDC::---> BUT when is it initialized pointerToEFPrmVtxCollections?
+    {
+     	// Protect against null pointers
+	if(pointerToEFPrmVtxCollections) 
+	{
+	    // Protect against empty vectors
+	    if(pointerToEFPrmVtxCollections->size()>0) 
+	    {
+		// JDC:: FIXME, the first one is not necessarly the PV, there is a method
+	  	//const xAOD::Vertex* prmVertex = (*pointerToEFPrmVtxCollections)[0];
+		//m_xPrmVtx = (float)prmVertex->x();
+		//m_yPrmVtx = (float)prmVertex->y();
+		//m_zPrmVtx = (float)prmVertex->z();
+		for(const xAOD::Vertex * prmVertex : *pointerToEFPrmVtxCollections)
+		{
+    		    if(prmVertex->vertexType() == xAOD::VxType::PriVtx)
+		    {
+			m_xPrmVtx = (float)prmVertex->x();
+			m_yPrmVtx = (float)prmVertex->y();
+			m_zPrmVtx = (float)prmVertex->z();
+			// we get the first one primary vertex
+			break;
+		    }
+		}
+      	    } 
+      	    else 
+	    {
+		ATH_MSG_DEBUG("Empty primary vertex collection retrieved");       
+		m_xPrmVtx = 0;  // JDC:: redundant
+		m_yPrmVtx = 0;  // JDC:: redundant
+		m_zPrmVtx = 0;  // JDC:: redundant
+      	    }
+    	} 
+    	else
+	{
+       	    ATH_MSG_DEBUG("No primary vertex collection retrieved");
+       	    m_xPrmVtx = 0;
+      	    m_yPrmVtx = 0;
+      	    m_zPrmVtx = 0;
+    	}
+    }
+    // -----------------------------------
+    // Apply beam spot correction for tilt
+    // ----------------------------------- 
+    float m_xBeamSpot = m_trigBjetPrmVtxInfo->xBeamSpot() + 
+	tan(m_trigBjetPrmVtxInfo->xBeamSpotTilt()) * (m_zPrmVtx-m_trigBjetPrmVtxInfo->zBeamSpot());
+  
+    float m_yBeamSpot = m_trigBjetPrmVtxInfo->yBeamSpot() + 
+	tan(m_trigBjetPrmVtxInfo->yBeamSpotTilt()) * (m_zPrmVtx-m_trigBjetPrmVtxInfo->zBeamSpot());
+  
+    float m_zBeamSpot = m_trigBjetPrmVtxInfo->zBeamSpot();
 
-    // Protect against null pointers
-    if(pointerToEFPrmVtxCollections) {
+    m_trigBjetPrmVtxInfo->setBeamSpot(m_xBeamSpot, m_yBeamSpot, m_zBeamSpot);
+    m_trigBjetPrmVtxInfo->setPrmVtx(m_xPrmVtx, m_yPrmVtx, m_zPrmVtx);
+  
+    ATH_MSG_DEBUG(*m_trigBjetPrmVtxInfo);
+  
+    m_trackJetFinderTool->clear();
+    ATH_MSG_DEBUG("Set input  z-vtx to trackjet tool " << m_trigBjetPrmVtxInfo->zPrmVtx());
+    m_trackJetFinderTool->inputPrimaryVertexZ(m_trigBjetPrmVtxInfo->zPrmVtx());
+    ATH_MSG_DEBUG("Done set input  z-vtx to trackjet tool " << m_trigBjetPrmVtxInfo->zPrmVtx());
 
-      // Protect against empty vectors
-      if(pointerToEFPrmVtxCollections->size()>0) {
+    // Get number of reconstructed tracks in this RoI
+    m_totTracks = m_taggerHelper->getTrackNumber(pointerToEFTrackCollections);
 
-        const xAOD::Vertex* prmVertex = (*pointerToEFPrmVtxCollections)[0];
-        m_xPrmVtx = (float)prmVertex->x();
-        m_yPrmVtx = (float)prmVertex->y();
-        m_zPrmVtx = (float)prmVertex->z();
-      } 
-      else {
-        msg() << MSG::DEBUG << "Empty primary vertex collection retrieved" << endreq;
-        m_xPrmVtx = 0;
-        m_yPrmVtx = 0;
-        m_zPrmVtx = 0;
-      }
+    for(unsigned int j = 0; j < m_totTracks; ++j) 
+    {
+	const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
+     	m_mon_trk_a0.push_back(track->d0());
+    	m_mon_trk_z0.push_back(track->z0());
+     	
+      	if (efTrackSel(track, j)) 
+	{
+       	    m_totSelTracks++;
+      	    TrigBjetTrackInfo trigBjetTrackInfo(track);
+      	    
+	    float d0Corr=0, z0Corr=0;
+	    d0Corr=track->d0(); 
+      	    z0Corr=track->z0();
+      	    trigBjetTrackInfo.setIPCorr(d0Corr, z0Corr);
+	    ATH_MSG_DEBUG("  " << trigBjetTrackInfo);
+      	    trigBjetTrackInfoVector.push_back(trigBjetTrackInfo);
+      	    //m_trackJetFinderTool->addTrack(track, j);
+      	}
+    }
+    
+    std::vector<int> tracksTrackJet;
+    float etaTrackJet, phiTrackJet;
+    
+    m_trackJetFinderTool->findJet(tracksTrackJet, etaTrackJet, phiTrackJet);
+    if(etaTrackJet != -99 && phiTrackJet != -99) 
+    {
+     	m_trigBjetJetInfo->setEtaPhiTrkJet(etaTrackJet, phiTrackJet);
     } 
-    else {
-      msg() << MSG::DEBUG << "No primary vertex collection retrieved" << endreq;
-      m_xPrmVtx = 0;
-      m_yPrmVtx = 0;
-      m_zPrmVtx = 0;
+    else 
+    {
+     	m_trigBjetJetInfo->setEtaPhiTrkJet(m_trigBjetJetInfo->etaRoI(), m_trigBjetJetInfo->phiRoI());
+        ATH_MSG_DEBUG("eta Jet = eta RoI");
     }
-  }
-
-  // -----------------------------------
-  // Apply beam spot correction for tilt
-  // ----------------------------------- 
-    
-  float m_xBeamSpot = m_trigBjetPrmVtxInfo->xBeamSpot() + tan(m_trigBjetPrmVtxInfo->xBeamSpotTilt()) * (m_zPrmVtx-m_trigBjetPrmVtxInfo->zBeamSpot());
-  float m_yBeamSpot = m_trigBjetPrmVtxInfo->yBeamSpot() + tan(m_trigBjetPrmVtxInfo->yBeamSpotTilt()) * (m_zPrmVtx-m_trigBjetPrmVtxInfo->zBeamSpot());
-  float m_zBeamSpot = m_trigBjetPrmVtxInfo->zBeamSpot();
-
-  m_trigBjetPrmVtxInfo->setBeamSpot(m_xBeamSpot, m_yBeamSpot, m_zBeamSpot);
-  m_trigBjetPrmVtxInfo->setPrmVtx(m_xPrmVtx, m_yPrmVtx, m_zPrmVtx);
-
-  if (msgLvl() <= MSG::DEBUG)
-    msg() << MSG::DEBUG << *m_trigBjetPrmVtxInfo << endreq;
-
-  m_trackJetFinderTool->clear();
-  if (msgLvl() <= MSG::DEBUG)
-    msg() << MSG::DEBUG << "Set input  z-vtx to trackjet tool " << m_trigBjetPrmVtxInfo->zPrmVtx() << endreq;
-  m_trackJetFinderTool->inputPrimaryVertexZ(m_trigBjetPrmVtxInfo->zPrmVtx());
-  if (msgLvl() <= MSG::DEBUG)
-    msg() << MSG::DEBUG << "Done set input  z-vtx to trackjet tool " << m_trigBjetPrmVtxInfo->zPrmVtx() << endreq;
-
-  m_totTracks = m_taggerHelper->getTrackNumber(pointerToEFTrackCollections);
+    ATH_MSG_DEBUG(*m_trigBjetJetInfo);
   
-  for (unsigned int j = 0; j < m_totTracks; j++) {
+    // -----------------------------------
+    // For monitoring
+    // -----------------------------------
+    m_deltaEtaJet       = m_trigBjetJetInfo->etaRoI()-m_trigBjetJetInfo->etaJet();
+    m_deltaPhiJet       = m_trigBjetJetInfo->phiRoI()-m_trigBjetJetInfo->phiJet();
+    m_deltaEtaTrkJet    = m_trigBjetJetInfo->etaRoI()-m_trigBjetJetInfo->etaTrkJet();
+    m_deltaPhiTrkJet    = m_trigBjetJetInfo->phiRoI()-m_trigBjetJetInfo->phiTrkJet();
+    m_deltaEtaJetTrkJet = m_trigBjetJetInfo->etaJet()-m_trigBjetJetInfo->etaTrkJet();
+    m_deltaPhiJetTrkJet = m_trigBjetJetInfo->phiJet()-m_trigBjetJetInfo->phiTrkJet();
     
-    const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
+    std::vector<std::string>::iterator pTagger    = m_taggers.begin();
+    std::vector<std::string>::iterator lastTagger = m_taggers.end();
     
-    m_mon_trk_a0.push_back(track->d0());
-    m_mon_trk_z0.push_back(track->z0());
-    
-    if (efTrackSel(track, j)) {
-      m_totSelTracks++;
-      TrigBjetTrackInfo trigBjetTrackInfo(track);
-      
-      float d0Corr=0, z0Corr=0;
-      d0Corr=track->d0(); 
-      z0Corr=track->z0();
-      trigBjetTrackInfo.setIPCorr(d0Corr, z0Corr);
-      if (msgLvl() <= MSG::DEBUG)
-        msg() << MSG::DEBUG << "  " << trigBjetTrackInfo << endreq;
-      trigBjetTrackInfoVector.push_back(trigBjetTrackInfo);
-
-      //m_trackJetFinderTool->addTrack(track, j);
+    if(m_useBeamSpotFlag && !m_trigBjetPrmVtxInfo->beamSpotStatus()) 
+    {
+	ATH_MSG_DEBUG("Beam spot status flag set to " << m_trigBjetPrmVtxInfo->beamSpotStatus() 
+		<< ". Discriminant weights are not computed.");
+   	ATH_MSG_DEBUG("Beam spot flag set to " << m_useBeamSpotFlag << 
+		". Discriminant weights are not computed.");
+     	m_listCutApplied.push_back(0);
+    	m_trigBjetTagger->getWeights();
+    } 
+    else if(m_trigBjetPrmVtxInfo->xBeamSpotWidth()>m_setBeamSpotWidth || 
+	    m_trigBjetPrmVtxInfo->yBeamSpotWidth()>m_setBeamSpotWidth) 
+    {
+     	ATH_MSG_DEBUG("Beam spot width is more than " << m_setBeamSpotWidth 
+		<< "um. Discriminant weights are not computed.");
+    	m_listCutApplied.push_back(1);
+    	m_trigBjetTagger->getWeights();
     }
-  }
-
-  std::vector<int> tracksTrackJet;
-  float etaTrackJet, phiTrackJet;
-  
-  m_trackJetFinderTool->findJet(tracksTrackJet, etaTrackJet, phiTrackJet);
-
-  if (etaTrackJet != -99 && phiTrackJet != -99) {
-    
-    m_trigBjetJetInfo->setEtaPhiTrkJet(etaTrackJet, phiTrackJet);
-    
-  } 
-  else {
-    
-    m_trigBjetJetInfo->setEtaPhiTrkJet(m_trigBjetJetInfo->etaRoI(), m_trigBjetJetInfo->phiRoI());
-    
-    if (msgLvl() <= MSG::DEBUG)
-      msg() << MSG::DEBUG << "eta Jet = eta RoI" << endreq;
-  }
-  
-  if (msgLvl() <= MSG::DEBUG)
-    msg() << MSG::DEBUG << *m_trigBjetJetInfo << endreq;
-
-  // -----------------------------------
-  // For monitoring
-  // -----------------------------------
-  m_deltaEtaJet       = m_trigBjetJetInfo->etaRoI()-m_trigBjetJetInfo->etaJet();
-  m_deltaPhiJet       = m_trigBjetJetInfo->phiRoI()-m_trigBjetJetInfo->phiJet();
-  m_deltaEtaTrkJet    = m_trigBjetJetInfo->etaRoI()-m_trigBjetJetInfo->etaTrkJet();
-  m_deltaPhiTrkJet    = m_trigBjetJetInfo->phiRoI()-m_trigBjetJetInfo->phiTrkJet();
-  m_deltaEtaJetTrkJet = m_trigBjetJetInfo->etaJet()-m_trigBjetJetInfo->etaTrkJet();
-  m_deltaPhiJetTrkJet = m_trigBjetJetInfo->phiJet()-m_trigBjetJetInfo->phiTrkJet();
-
-  std::vector<std::string>::iterator pTagger    = m_taggers.begin();
-  std::vector<std::string>::iterator lastTagger = m_taggers.end();
-
-  if (m_useBeamSpotFlag && !m_trigBjetPrmVtxInfo->beamSpotStatus()) {
-
-    if(msgLvl() <= MSG::DEBUG) {
-      msg() << MSG::DEBUG << "Beam spot status flag set to " << m_trigBjetPrmVtxInfo->beamSpotStatus() << ". Discriminant weights are not computed." << endreq;
-      msg() << MSG::DEBUG << "Beam spot flag set to " << m_useBeamSpotFlag << ". Discriminant weights are not computed." << endreq;
+    else 
+    {
+  	ATH_MSG_DEBUG("Computing discriminant weights using taggers: " << m_taggers <<
+	       	" and using calibration from " << (m_useParamFromData==0 ? "MC" : "data") 
+		<< " for CHI2");
+      	//Look for a sec vertex?
+	bool retrieveSV = false;
+    	for( ; pTagger != lastTagger; ++pTagger) 
+	{
+	    if((*pTagger).find("VTX") != std::string::npos) 
+	    {
+	      	retrieveSV = true;
+	       	break;
+	    }
+    	}
+     	if(retrieveSV) 
+	{
+	    // Get secondary vertex information at EF from TrigBjetFex::getSecVtxInfo
+	    //if (getSecVtxInfo(pointerToEFSecVtxCollections, pointerToEFPrmVtxCollections, 
+	    //           pointerToPrmVtxCollections) != HLT::OK)
+	    if(getSecVtxInfo(pointerToEFSecVtxCollections, pointerToEFPrmVtxCollections) != HLT::OK)
+	    { 
+		ATH_MSG_DEBUG("No EF SV information retrieved from TrigBjetFex::getSecVtxInfo");
+	    }
+	    ATH_MSG_DEBUG(*m_trigBjetSecVtxInfo);
+     	}
+	// JDC:: Not need the weights, just the values
+    	m_trigBjetTagger->getWeights(m_trigBjetTrackInfoVector, 
+		m_trigBjetPrmVtxInfo, m_trigBjetSecVtxInfo, m_trigBjetJetInfo);
     }
 
-    m_listCutApplied.push_back(0);
-    m_trigBjetTagger->getWeights();
-
-  } else if (m_trigBjetPrmVtxInfo->xBeamSpotWidth()>m_setBeamSpotWidth || m_trigBjetPrmVtxInfo->yBeamSpotWidth()>m_setBeamSpotWidth) {
-
-    if(msgLvl() <= MSG::DEBUG)
-      msg() << MSG::DEBUG << "Beam spot width is more than " << m_setBeamSpotWidth << "um. Discriminant weights are not computed." << endreq;
-
-    m_listCutApplied.push_back(1);
-    m_trigBjetTagger->getWeights();
-
-  } else {
-    
-    if (msgLvl() <= MSG::DEBUG) 
-      msg() << MSG::DEBUG << "Computing discriminant weights using taggers: " << m_taggers 
-            << " and using calibration from " << (m_useParamFromData==0 ? "MC" : "data") << " for CHI2" << endreq;
-
-    //Look for a sec vertex?
-    bool retrieveSV = false;
-    for ( ; pTagger != lastTagger; pTagger++) {
-      if ((*pTagger).find("VTX") != std::string::npos) {
-        retrieveSV = true;
-        break;
-      }
-    }
-    
-    if(retrieveSV) {
+    // Some info to print if it is in the proper message level
+    if(msgLvl() <= MSG::DEBUG) 
+    {
+      	const EventInfo* pEventInfo = 0;
+     	if( !store() || store()->retrieve(pEventInfo).isFailure() ) 
+	{
+	    ATH_MSG_DEBUG("Failed to get EventInfo ");
+	} 
+      	else 
+	{
+	    ATH_MSG_DEBUG("Bjet slice summary (Run " << pEventInfo->event_ID()->run_number() 
+		    << "; Event " << pEventInfo->event_ID()->event_number() << ")");
+      	    ATH_MSG_DEBUG("REGTEST:  RoI " << roiDescriptor->roiId() << ", Phi = "   
+		    << roiDescriptor->phi() << ", Eta = "   << roiDescriptor->eta());
+       	    ATH_MSG_DEBUG("REGTEST:  Tracks: " << m_totTracks << " reconstructed and " 
+		    << m_totSelTracks <<" selected");
+	
+	    if(pointerToEFPrmVtxCollections) 
+	    {
+		ATH_MSG_DEBUG("REGTEST:  Primary vertex: " 
+			<< pointerToEFPrmVtxCollections->size() << " reconstructed"
+		       	<< ", (x,y,z) = (" << m_trigBjetPrmVtxInfo->xPrmVtx() << "," 
+			<< m_trigBjetPrmVtxInfo->yPrmVtx() << "," 
+			<< m_trigBjetPrmVtxInfo->zPrmVtx() << ")");
+      	    }
+       	    if(pointerToEFSecVtxCollections)
+	    {
+		ATH_MSG_DEBUG("REGTEST:  Secondary vertex: " 
+			<< pointerToEFSecVtxCollections->size() << " reconstructed");
+	    }
+	    else
+	    {
+		ATH_MSG_DEBUG("REGTEST:  Secondary vertex: 0 reconstructed");
+	    }
+    	    ATH_MSG_DEBUG("REGTEST:  SV L/sigma(L) " 
+		    <<  m_trigBjetSecVtxInfo->decayLengthSignificance() << "  SV mass " 
+		    <<  m_trigBjetSecVtxInfo->vtxMass() << "  SV efrac " 
+		    <<  m_trigBjetSecVtxInfo->energyFraction() 
+		    << "   SV 2-track vertex multiplicity " << m_trigBjetSecVtxInfo->n2TrkVtx());
+            ATH_MSG_DEBUG("REGTEST: List weights stored probability and likelihood objects:");
        
-      // Get secondary vertex information at EF from TrigBjetFex::getSecVtxInfo
-      //if (getSecVtxInfo(pointerToEFSecVtxCollections, pointerToEFPrmVtxCollections, pointerToPrmVtxCollections) != HLT::OK)
-      if (getSecVtxInfo(pointerToEFSecVtxCollections, pointerToEFPrmVtxCollections) != HLT::OK)
-        if (msgLvl() <= MSG::DEBUG)
-          msg() << MSG::DEBUG << "No EF SV information retrieved from TrigBjetFex::getSecVtxInfo" << endreq;
-      
-      if (msgLvl() <= MSG::DEBUG)
-        msg() << MSG::DEBUG << *m_trigBjetSecVtxInfo << endreq;
-      
+	    pTagger = m_taggers.begin();
+	    for ( ; pTagger != lastTagger; ++pTagger)
+	    {
+		ATH_MSG_DEBUG("REGTEST:  X(" << (*pTagger) << ") = " 
+			<< m_trigBjetTagger->taggersXMap((*pTagger)));
+	    }
+	}
     }
 
-    m_trigBjetTagger->getWeights(m_trigBjetTrackInfoVector, m_trigBjetPrmVtxInfo, m_trigBjetSecVtxInfo, m_trigBjetJetInfo);
-  }
-  
-  if (msgLvl() <= MSG::DEBUG) {
-     
-    const EventInfo* pEventInfo;
-     
-    if ( !store() || store()->retrieve(pEventInfo).isFailure() ) {
-      msg()  << MSG::DEBUG << "Failed to get EventInfo " << endreq;
-    } 
-    else {
-      msg() << MSG::DEBUG << "Bjet slice summary (Run " << pEventInfo->event_ID()->run_number() 
-            << "; Event " << pEventInfo->event_ID()->event_number() << ")" << endreq;
-      msg() << MSG::DEBUG << "REGTEST:  RoI " << roiDescriptor->roiId()
-            << ", Phi = "   << roiDescriptor->phi()
-            << ", Eta = "   << roiDescriptor->eta() << endreq;
-      msg() << MSG::DEBUG << "REGTEST:  Tracks: " << m_totTracks << " reconstructed and " << m_totSelTracks <<" selected" << endreq;
-      
-      if (pointerToEFPrmVtxCollections) {
-        msg() << MSG::DEBUG << "REGTEST:  Primary vertex: " << pointerToEFPrmVtxCollections->size() << " reconstructed"
-              << ", (x,y,z) = (" << m_trigBjetPrmVtxInfo->xPrmVtx() << "," << m_trigBjetPrmVtxInfo->yPrmVtx() << "," << m_trigBjetPrmVtxInfo->zPrmVtx() << ")" << endreq;
-      }
-      if (pointerToEFSecVtxCollections)
-        msg() << MSG::DEBUG << "REGTEST:  Secondary vertex: " << pointerToEFSecVtxCollections->size() << " reconstructed" << endreq;
-      else
-        msg() << MSG::DEBUG << "REGTEST:  Secondary vertex: 0 reconstructed" << endreq;
-      
-      msg() << MSG::DEBUG << "REGTEST:  SV L/sigma(L) " <<  m_trigBjetSecVtxInfo->decayLengthSignificance() << "  SV mass " <<  m_trigBjetSecVtxInfo->vtxMass() 
-            << "  SV efrac " <<  m_trigBjetSecVtxInfo->energyFraction() << "   SV 2-track vertex multiplicity " << m_trigBjetSecVtxInfo->n2TrkVtx() << endreq; 
-      
-      msg() << MSG::DEBUG << "REGTEST: List weights stored probability and likelihood objects:" << endreq;
-
-      pTagger = m_taggers.begin();
-      for ( ; pTagger != lastTagger; pTagger++)
-        msg() << MSG::DEBUG << "REGTEST:  X(" << (*pTagger) << ") = " << m_trigBjetTagger->taggersXMap((*pTagger))  << endreq;
-
+    // -----------------------------------
+    // Create TrigEFBjet and attach feature
+    // -----------------------------------
+    TrigEFBjet* trigEFBjet = new TrigEFBjet(roiDescriptor->roiId(), 
+	    m_trigBjetJetInfo->etaJet(), m_trigBjetJetInfo->phiJet(),
+	    0, 0, 0, m_trigBjetPrmVtxInfo->zPrmVtx(), m_trigBjetJetInfo->etJet(),
+	    m_trigBjetTagger->taggersXMap("COMB"),  m_trigBjetTagger->taggersXMap("IP1D"), 
+	    m_trigBjetTagger->taggersXMap("IP2D"),  m_trigBjetTagger->taggersXMap("IP3D"), 
+	    m_trigBjetTagger->taggersXMap("CHI2"), 
+	    m_trigBjetSecVtxInfo->decayLengthSignificance(), m_trigBjetSecVtxInfo->vtxMass(), 
+	    m_trigBjetSecVtxInfo->energyFraction(), m_trigBjetSecVtxInfo->n2TrkVtx()); 
+    
+    trigEFBjet->validate(true);
+    m_trigEFBjetColl->push_back(trigEFBjet);
+    
+    if(!m_trigEFBjetColl) 
+    {
+	ATH_MSG_ERROR("Feature TrigEFBjetContainer not found");
+       	return HLT::BAD_JOB_SETUP;
     }
-  }
+    
+    HLT::ErrorCode stat = attachFeature(outputTE, m_trigEFBjetColl, "EFBjetFex");
+    if(stat != HLT::OK) 
+    {
+	ATH_MSG_DEBUG("Failed to attach TrigEFBjetContainer to navigation");
+	return stat;
+    }
 
-  // -----------------------------------
-  // Create TrigEFBjet and attach feature
-  // -----------------------------------
-  TrigEFBjet* trigEFBjet = new TrigEFBjet(roiDescriptor->roiId(), m_trigBjetJetInfo->etaJet(), m_trigBjetJetInfo->phiJet(),
-					  0, 0, 0, m_trigBjetPrmVtxInfo->zPrmVtx(), m_trigBjetJetInfo->etJet(),
-					  m_trigBjetTagger->taggersXMap("COMB"),  m_trigBjetTagger->taggersXMap("IP1D"), 
-					  m_trigBjetTagger->taggersXMap("IP2D"),  m_trigBjetTagger->taggersXMap("IP3D"), 
-					  m_trigBjetTagger->taggersXMap("CHI2"), 
-					  m_trigBjetSecVtxInfo->decayLengthSignificance(), m_trigBjetSecVtxInfo->vtxMass(), 
-					  m_trigBjetSecVtxInfo->energyFraction(), m_trigBjetSecVtxInfo->n2TrkVtx()); 
+    // -----------------------------------
+    // Create xAOD::BTagging and attach feature
+    // -----------------------------------
+    xAOD::BTagging * newBTag = new xAOD::BTagging();
+    m_trigBTaggingContainer->push_back(newBTag);
+    newBTag->setSV1_pu(m_trigBjetTagger->taggersPuMap("MVTX")*
+	    m_trigBjetTagger->taggersPuMap("NVTX")*m_trigBjetTagger->taggersPuMap("EVTX"));
+    newBTag->setSV1_pb(m_trigBjetTagger->taggersPbMap("MVTX")*
+	    m_trigBjetTagger->taggersPbMap("NVTX")*m_trigBjetTagger->taggersPbMap("EVTX"));
+    newBTag->setIP2D_pu(m_trigBjetTagger->taggersPuMap("IP2D"));
+    newBTag->setIP2D_pb(m_trigBjetTagger->taggersPbMap("IP2D"));
+    
+    newBTag->setIP3D_pu(m_trigBjetTagger->taggersPuMap("IP3D"));
+    newBTag->setIP3D_pb(m_trigBjetTagger->taggersPbMap("IP3D"));
+
+    ATH_MSG_DEBUG("IP2D u/b: " << m_trigBjetTagger->taggersPuMap("IP2D") << "/" 
+	    << m_trigBjetTagger->taggersPbMap("IP2D") << "   IP3D u/b: " 
+	    << m_trigBjetTagger->taggersPuMap("IP3D") << "/" << m_trigBjetTagger->taggersPbMap("IP3D")
+    	    << "   SV1 u/b: " << m_trigBjetTagger->taggersPuMap("MVTX")*
+	            m_trigBjetTagger->taggersPuMap("NVTX")*m_trigBjetTagger->taggersPuMap("EVTX") 
+
+	    << "/" <<  m_trigBjetTagger->taggersPbMap("MVTX")*
+	    m_trigBjetTagger->taggersPbMap("NVTX")*m_trigBjetTagger->taggersPbMap("EVTX"));
+    if(!m_trigBTaggingContainer) 
+    {
+    	ATH_MSG_ERROR("Feature BTaggingContainer not found");
+    	return HLT::BAD_JOB_SETUP;
+    }
   
-  trigEFBjet->validate(true);
-  m_trigEFBjetColl->push_back(trigEFBjet);
-  
-  if (!m_trigEFBjetColl) {
-    msg() << MSG::ERROR << "Feature TrigEFBjetContainer not found" << endreq;
-    return HLT::BAD_JOB_SETUP;
-  }
-  
-  HLT::ErrorCode stat = attachFeature(outputTE, m_trigEFBjetColl, "EFBjetFex");
-  
-  if (stat != HLT::OK) {
-    if ( msgLvl() <= MSG::DEBUG) 
-      msg() << MSG::DEBUG << "Failed to attach TrigEFBjetContainer to navigation" << endreq;
-    return stat;
-  }
-
-  // -----------------------------------
-  // Create xAOD::BTagging and attach feature
-  // -----------------------------------
-  xAOD::BTagging * newBTag = new xAOD::BTagging();
-  m_trigBTaggingContainer->push_back(newBTag);
-
-  newBTag->setSV1_pu(m_trigBjetTagger->taggersPuMap("MVTX")*m_trigBjetTagger->taggersPuMap("NVTX")*m_trigBjetTagger->taggersPuMap("EVTX"));
-  newBTag->setSV1_pb(m_trigBjetTagger->taggersPbMap("MVTX")*m_trigBjetTagger->taggersPbMap("NVTX")*m_trigBjetTagger->taggersPbMap("EVTX"));
-
-  newBTag->setIP2D_pu(m_trigBjetTagger->taggersPuMap("IP2D"));
-  newBTag->setIP2D_pb(m_trigBjetTagger->taggersPbMap("IP2D"));
-
-  newBTag->setIP3D_pu(m_trigBjetTagger->taggersPuMap("IP3D"));
-  newBTag->setIP3D_pb(m_trigBjetTagger->taggersPbMap("IP3D"));
-
-  msg() << MSG::DEBUG << "IP2D u/b: " << m_trigBjetTagger->taggersPuMap("IP2D") << "/" << m_trigBjetTagger->taggersPbMap("IP2D")
-	<< "   IP3D u/b: " << m_trigBjetTagger->taggersPuMap("IP3D") << "/" << m_trigBjetTagger->taggersPbMap("IP3D")
-	<< "   SV1 u/b: " << m_trigBjetTagger->taggersPuMap("MVTX")*m_trigBjetTagger->taggersPuMap("NVTX")*m_trigBjetTagger->taggersPuMap("EVTX") << "/"
-	<< m_trigBjetTagger->taggersPbMap("MVTX")*m_trigBjetTagger->taggersPbMap("NVTX")*m_trigBjetTagger->taggersPbMap("EVTX") << endreq;
-
-  if (!m_trigBTaggingContainer) {
-    msg() << MSG::ERROR << "Feature BTaggingContainer not found" << endreq;
-    return HLT::BAD_JOB_SETUP;
-  }
-
-  stat = attachFeature(outputTE, m_trigBTaggingContainer, "HLTBjetFex");
-  
-  if (stat != HLT::OK) {
-    if ( msgLvl() <= MSG::DEBUG)
-      msg() << MSG::DEBUG << "Failed to attach BTaggingContainer to navigation" << endreq;
-    return stat;
-  }
-
-  return HLT::OK;
+    stat = attachFeature(outputTE, m_trigBTaggingContainer, "HLTBjetFex");
+    if(stat != HLT::OK) 
+    {
+	ATH_MSG_DEBUG("Failed to attach BTaggingContainer to navigation");
+    	return stat;
+    }
+    return HLT::OK;
 }
 
 
