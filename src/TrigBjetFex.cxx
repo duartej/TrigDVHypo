@@ -1144,8 +1144,6 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
      	if(retrieveSV) 
 	{
 	    // Get secondary vertex information at EF from TrigBjetFex::getSecVtxInfo
-	    //if (getSecVtxInfo(pointerToEFSecVtxCollections, pointerToEFPrmVtxCollections, 
-	    //           pointerToPrmVtxCollections) != HLT::OK)
 	    if(getSecVtxInfo(pointerToEFSecVtxCollections, pointerToEFPrmVtxCollections) != HLT::OK)
 	    { 
 		ATH_MSG_DEBUG("No EF SV information retrieved from TrigBjetFex::getSecVtxInfo");
@@ -1206,6 +1204,9 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
 	    }
 	}
     }
+
+    // Attach a Primary Vertex and Secondary Vertex... we want to cut just in there? ... What else?
+    // Me interesan los m_trigBjetSecVtxInfo 
 
     // -----------------------------------
     // Create TrigEFBjet and attach feature
