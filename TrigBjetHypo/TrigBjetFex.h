@@ -16,8 +16,8 @@
 
 #include "TrigInterfaces/FexAlgo.h"
 
-#include "TrigBjetHypo/TrigBjetTagger.h"
-#include "TrigBjetHypo/TuningLikelihood.h"
+//#include "TrigBjetHypo/TrigBjetTagger.h"
+//#include "TrigBjetHypo/TuningLikelihood.h"
 #include "TrigBjetHypo/TrigBjetDataHelper.h"
 
 #include "TrigTrackJetFinderTool/ITrigTrackJetFinderTool.h"
@@ -33,7 +33,7 @@ class TrigInDetTrackCollection;
 class TrackParticleContainer;
 class TrigVertexCollection;
 class VxContainer;
-class TrigBjetTagger;
+//class TrigBjetTagger;
 class TrigRoiDescriptor;
 
 class TaggerHelper;
@@ -62,7 +62,7 @@ class TrigBjetFex: public HLT::FexAlgo {
  public:
 
   /** @brief For monitoring purposes the TrigBjetTagger class has been declared as friend. */
-  friend class TrigBjetTagger;
+  //friend class TrigBjetTagger;
 
   /** @brief Constructor. */
   TrigBjetFex(const std::string&, ISvcLocator*);
@@ -97,16 +97,9 @@ class TrigBjetFex: public HLT::FexAlgo {
   ToolHandle<ITrigTrackJetFinderTool> m_trackJetFinderTool;
   /** @brief Pointer to TrigEFBjet collection. */
   TrigEFBjetContainer* m_trigEFBjetColl;
-  /** @brief Pointer to xAOD::BTaggingContainer. */
-  xAOD::BTaggingContainer* m_trigBTaggingContainer;
 
   /** @brief Pointer to TaggerHelper class. */ 
   TaggerHelper* m_taggerHelper;
-
-  /** @brief Pointer to TrigBjetTagger class. */ 
-  TrigBjetTagger* m_trigBjetTagger;
-  /** @brief Const pointer to TrigBjetTagger class (for monitoring). */ 
-  const TrigBjetTagger* m_constTrigBjetTagger;
 
   /** @brief Internal EDM class for primary vertex and beam-spot information, defined in TrigBjetDataHelper. */ 
   TrigBjetPrmVtxInfo* m_trigBjetPrmVtxInfo;
@@ -119,8 +112,6 @@ class TrigBjetFex: public HLT::FexAlgo {
 
   /** @brief track reconstruction algorithm. */
   int m_algo;
-  /** @brief list of computed taggers. */
-  std::vector<std::string> m_taggers;
   /** @brief switch to use impact parameter errors parametrization. */
   bool m_useErrIPParam;
   /** @brief switch to use primary vertex computed with TrigT2HistoPrmVtx or InDetTrigPriVxFinder algorithm. */
@@ -173,9 +164,16 @@ class TrigBjetFex: public HLT::FexAlgo {
   std::vector<float> m_mon_trk_prob;
 
   /** @brief To retrieve selected tracks in percentage. */ 
-  float totSelectedTracks() const {
-    if (!m_totTracks) return -0.1;
-    else return (float)m_totSelTracks/(float)m_totTracks;
+  inline float totSelectedTracks() const 
+  {
+    if(!m_totTracks)
+    { 
+      return -0.1;
+    }
+    else
+    {
+       return (float)m_totSelTracks/(float)m_totTracks;
+    }
   };
 
   /** @brief Number of reconstructed tracks per RoI. */
@@ -196,58 +194,6 @@ class TrigBjetFex: public HLT::FexAlgo {
   /** @brief Delta phi between the EF jet and the EF track-jet. */
   float m_deltaPhiJetTrkJet;
 
-  //////////////////////
-  //* for calibration *//
-  //////////////////////
-
-  /** @brief Pointer to TuningLikelihood class for IP1D likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodIP1D;
-  /** @brief Pointer to TuningLikelihood class for IP2D likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodIP2D;
-  /** @brief Pointer to TuningLikelihood class for IP3D likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodIP3D;
-  /** @brief Pointer to TuningLikelihood class for IP1D likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodIP1D_lowSiHits;
-  /** @brief Pointer to TuningLikelihood class for IP2D likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodIP2D_lowSiHits;
-  /** @brief Pointer to TuningLikelihood class for IP3D likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodIP3D_lowSiHits;
-  /** @brief Pointer to TuningLikelihood class for MVtx likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodMVtx;
-  /** @brief Pointer to TuningLikelihood class for EVtx likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodEVtx;
-  /** @brief Pointer to TuningLikelihood class for NVtx likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodNVtx;
-  /** @brief Pointer to TuningLikelihood class for SV likelihood tagger. */ 
-  TuningLikelihood* m_tuningLikelihoodSV;
-
-  /** @brief necessary for calibration constants for one-dimensional likelihood taggers based on impact parameters. */
-  std::vector<float> m_sizeIP1D, m_bIP1D, m_uIP1D;  
-  /** @brief necessary for calibration constants for two-dimensional likelihood taggers based on impact parameters. */
-  std::vector<float> m_sizeIP2D, m_bIP2D, m_uIP2D;
-  /** @brief necessary for calibration constants for three-dimensional likelihood taggers based on impact parameters. */
-  std::vector<float> m_sizeIP3D, m_bIP3D, m_uIP3D;
-
-  /** @brief necessary for calibration constants for one-dimensional likelihood taggers based on impact parameters. */
-  std::vector<float> m_sizeIP1D_lowSiHits, m_bIP1D_lowSiHits, m_uIP1D_lowSiHits;
-  /** @brief necessary for calibration constants for two-dimensional likelihood taggers based on impact parameters. */
-  std::vector<float> m_sizeIP2D_lowSiHits, m_bIP2D_lowSiHits, m_uIP2D_lowSiHits;
-  /** @brief necessary for calibration constants for three-dimensional likelihood taggers based on impact parameters. */
-  std::vector<float> m_sizeIP3D_lowSiHits, m_bIP3D_lowSiHits, m_uIP3D_lowSiHits;
-
-  bool m_useLowSiHits;
-
-  /** @brief necessary for calibration constants for one-dimensional likelihood taggers based on mass of secondary vertex. */
-  std::vector<float> m_sizeMVtx, m_bMVtx, m_uMVtx;
-  /** @brief necessary for calibration constants for one-dimensional likelihood taggers based on energy secondary vertex. */
-  std::vector<float> m_sizeEVtx, m_bEVtx, m_uEVtx;
-  /** @brief necessary for calibration constants for one-dimensional likelihood taggers based on number of tracks linked to secondary vertex. */
-  std::vector<float> m_sizeNVtx, m_bNVtx, m_uNVtx;
-  /** @brief necessary for calibration constants for three-dimensional likelihood taggers based on secondary vertex. */
-  std::vector<float> m_sizeSV, m_bSV, m_uSV;
-
-  /** @brief necessary for calibration constants for BjetProbability */
-  std::vector<float> m_par_0_MC, m_par_1_MC, m_par_0_DT, m_par_1_DT;
 };
 
 #endif
