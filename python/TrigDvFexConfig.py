@@ -57,11 +57,15 @@ class DvFex(TrigDvFex):
         
         self.AthenaMonTools = [ time ]
         
+	self.validation = False
+	self.onlinemon  = False
 	if instance=="EF" :
             from TrigBjetHypo.TrigDvFexMonitoring import TrigEFDvFexValidationMonitoring, TrigEFDvFexOnlineMonitoring
             validation = TrigEFDvFexValidationMonitoring()
             online     = TrigEFDvFexOnlineMonitoring()    
 	    self.AthenaMonTools+=[validation],online]
+	    self.validation = True
+	    self.onlinemon  = True
 
 
 

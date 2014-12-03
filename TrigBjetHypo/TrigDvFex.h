@@ -78,6 +78,12 @@ class TrigDvFex: public HLT::FexAlgo
       	std::string m_jetKey;
       	std::string m_priVtxKey;
 
+	/** @brief Enable monitoring histograms (online) */
+	bool m_mon_online;
+	/** @brief Enable monitoring histograms (validation) */
+	bool m_mon_validation;
+	
+
       	/** @brief To retrieve track collections reconstructed at EF and stored in TrackParticleContainer. */
       	HLT::ErrorCode getTrackCollection(const xAOD::TrackParticleContainer*&, const HLT::TriggerElement*);
   	/** @brief To retrieve primary vertex collections reconstructed and stored in VxContainer. */
@@ -113,6 +119,9 @@ class TrigDvFex: public HLT::FexAlgo
       	bool m_histoPrmVtxAtEF;
       	/** @brief switch to perform track-RoI eta/phi matching when selecting reconstructed tracks. */
       	bool m_useEtaPhiTrackSel;
+  	/** @brief switch to estimate the track impact parameter sign using the HLT jet 
+	 * direction (1) or the HLT track-jet direction (2) or the LVL1 jet RoI direction (3). */
+      	unsigned int m_useJetDirection;
 
   	/** @brief string corresponding to the trigger level in which the algorithm is running. */
       	std::string m_instance;

@@ -43,7 +43,7 @@
 #include "xAODBase/IParticle.h"
 
 //** ---------------------------------------------------------------------- **//
-
+const double TOLERANCE=1e-30;
 
 TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   HLT::FexAlgo(name, pSvcLocator),
@@ -60,11 +60,16 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareProperty ("JetKey",             m_jetKey     = ""); //"" needed for default config, SplitJet for new config
   declareProperty ("PriVtxKey",          m_priVtxKey  = "EFHistoPrmVtx"); //Does this still work with default config?
 
+  declareProperty ("onlinemon",          m_mon_online = true);
+  declareProperty ("validation",         m_mon_validation = true);
+  
   declareProperty ("UseBeamSpotFlag",    m_useBeamSpotFlag    = false);
   declareProperty ("SetBeamSpotWidth",   m_setBeamSpotWidth   = 0.05);
 
   declareProperty ("HistoPrmVtxAtEF",    m_histoPrmVtxAtEF    = true);
   declareProperty ("UseEtaPhiTrackSel",  m_useEtaPhiTrackSel  = false);
+  
+  declareProperty ("UseJetDirection",    m_useJetDirection);
 
   declareProperty ("TrkSel_Chi2",        m_trkSelChi2         = 0.0);
   declareProperty ("TrkSel_BLayer",      m_trkSelBLayer       = 1);
@@ -132,6 +137,7 @@ HLT::ErrorCode TrigDvFex::hltInitialize()
 
     ATH_MSG_DEBUG(" HistoPrmVtxAtEF = "     << m_histoPrmVtxAtEF );
     ATH_MSG_DEBUG(" UseEtaPhiTrackSel = "   << m_useEtaPhiTrackSel );
+    ATH_MSG_DEBUG(" UseJetDirection = "     << m_useJetDirection );
 
     ATH_MSG_DEBUG(" TrkSel_Chi2 = "     << m_trkSelChi2 ); 
     ATH_MSG_DEBUG(" TrkSel_BLayer = "   << m_trkSelBLayer ); 
@@ -513,6 +519,56 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     ATH_MSG_DEBUG("    track " << i+1 << " is selected");
    
     m_listCutApplied.push_back(CutListMonitor::SELECTED);
+    // Monitoring stuff -------------------------------------------------
+    if(m_mon_validation || m_mon_online)
+    {
+	m_mon_trk_a0_sel.push_back(track->d0());
+	m_mon_trk_z0_sel.push_back(track->z0());
+	m_mon_trk_z0_sel_PV.push_back(track->z0()-m_trigBjetPrmVtxInfo->zPrmVtx());
+
+	const float errIP1D = track->ez0();
+	const float errIP2D = trackk->ed0();
+	const float z0 = track->z0Corr()-m_trigBjetPrmVtxInfo->zPrmVtx();
+
+	float phiJetObject = 0.0;
+	float etaJetObject = 0.0; 
+		
+	if(m_useJetDirection == 1) 
+	{
+	    // Using HLT Jet 
+	    phiJetObject = m_trigBjetJetInfo->phiJet();
+	    etaJetObject = m_trigBjetJetInfo->etaJet();
+	}
+	else if(m_useJetDirection == 2) 
+	{
+	    // Using HLT track-based jet
+	    phiJetObject = m_trigBjetJetInfo->phiTrkJet();
+	    etaJetObject = m_trigBjetJetInfo->etaTrkJet();
+    	} 
+	else if(m_trigBjetFex->m_useJetDirection == 3) 
+	{
+	    // Using the LvL1 jet RoI 
+	    phiJetObject = m_trigBjetJetInfo->phiRoI();
+      	    etaJetObject = m__trigBjetJetInfo->etaRoI();
+    	}
+	const float d0Sign = m_taggerHelper->signedD0(track->d0Corr(), track->phi(), phiJetObject);
+	const float z0Sign = m_taggerHelper->signedZ0(z0, track->eta(), etaJetObject);
+  	const float sigmaBeamSpot = (m_trigBjetPrmVtxInfo->xBeamSpotWidth()+
+		m_trigBjetPrmVtxInfo->yBeamSpotWidth())/2.0;
+	float IP1D = 0.0;
+	float IP2D = 0.0;
+	if(fabs(errIP1D) > TOLERANCE)
+	{
+	    IP1D = z0Sign/sqrt(errIP1D*errIP1D);
+	}
+	if((fabs(errIP2D) > TOLERANCE) || sigmaBeamSpot)
+	{
+	    IP2D = d0Sign/sqrt(IPD2D*errIP2D+sigmaBeamSpot*sigmaBeamSpot)
+	};
+	m_mon_trk_Sz0_sel.push_back(IP1D);
+	m_mon_trk_Sa0_sel.push_back(IP2D);
+    }
+
     return true;
 }
 
@@ -805,7 +861,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
   
     float m_zBeamSpot = m_trigBjetPrmVtxInfo->zBeamSpot();
 
-    m_trigBjetPrmVtxInfo->setBeamSpot(m_xBeamSpot, m_yBeamSpot, m_zBeamSpot);
+    m_trigBjetPrmVtxInfo->setBeamSpot(m_xBeamSpot, m_yBeamSpot, m_zBeamSpot);  // Redundant?
     m_trigBjetPrmVtxInfo->setPrmVtx(m_xPrmVtx, m_yPrmVtx, m_zPrmVtx);
   
     ATH_MSG_DEBUG(*m_trigBjetPrmVtxInfo);
@@ -820,8 +876,11 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     for(unsigned int j = 0; j < m_totTracks; ++j) 
     {
 	const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
-     	m_mon_trk_a0.push_back(track->d0());
-    	m_mon_trk_z0.push_back(track->z0());
+	if(m_mon_validation)
+	{
+    	    m_mon_trk_a0.push_back(track->d0());
+    	    m_mon_trk_z0.push_back(track->z0());
+	}
      	
       	if(efTrackSel(track, j)) 
 	{
