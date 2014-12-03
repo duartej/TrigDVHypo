@@ -1,25 +1,24 @@
 // ************************************************
 //
-// NAME:     TrigBjetFex.cxx
+// NAME:     TrigDvFex.cxx
 // PACKAGE:  Trigger/TrigHypothesis/TrigBjetHypo
 // 
 // ************************************************
 
-#include "TrigBjetHypo/TrigBjetFex.h"
+#include "TrigBjetHypo/TrigDvFex.h"
 #include "TaggerHelper.h"
 
-#include "TrigInDetEvent/TrigInDetTrackCollection.h"
+//#include "TrigInDetEvent/TrigInDetTrackCollection.h"
 #include "Particle/TrackParticleContainer.h"
-#include "TrigInDetEvent/TrigVertexCollection.h"
-#include "VxVertex/VxContainer.h"
+//#include "TrigInDetEvent/TrigVertexCollection.h"
 #include "VxSecVertex/VxSecVertexInfo.h"
 #include "VxSecVertex/VxSecVKalVertexInfo.h"
-#include "TrigCaloEvent/TrigT2Jet.h"
+//#include "TrigCaloEvent/TrigT2Jet.h"
 #include "TrigSteeringEvent/TrigRoiDescriptor.h"
 #include "EventInfo/EventInfo.h"
-#include "EventInfo/EventID.h"
-#include "EventPrimitives/EventPrimitives.h"
-#include "EventPrimitives/EventPrimitivesHelpers.h"
+//#include "EventInfo/EventID.h"
+//#include "EventPrimitives/EventPrimitives.h"
+//#include "EventPrimitives/EventPrimitivesHelpers.h"
 
 #include "TrigParticle/TrigEFBjetContainer.h"
 
@@ -27,11 +26,11 @@
 
 #include "InDetBeamSpotService/IBeamCondSvc.h"
 
-#include "TrigInDetEvent/TrigVertex.h"
+//#include "TrigInDetEvent/TrigVertex.h"
 
-#include "xAODBTagging/BTaggingContainer.h"
-#include "xAODBTagging/BTagging.h"
-#include "xAODBTagging/BTaggingAuxContainer.h"
+//#include "xAODBTagging/BTaggingContainer.h"
+//#include "xAODBTagging/BTagging.h"
+//#include "xAODBTagging/BTaggingAuxContainer.h"
 
 #include "xAODJet/Jet.h"
 #include "xAODJet/JetContainer.h"
@@ -46,7 +45,7 @@
 //** ---------------------------------------------------------------------- **//
 
 
-TrigBjetFex::TrigBjetFex(const std::string& name, ISvcLocator* pSvcLocator) :
+TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   HLT::FexAlgo(name, pSvcLocator),
   m_trackJetFinderTool("TrigTrackJetFinderTool",this),      	
   m_trigEFBjetColl(0),
@@ -64,15 +63,8 @@ TrigBjetFex::TrigBjetFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareProperty ("UseBeamSpotFlag",    m_useBeamSpotFlag    = false);
   declareProperty ("SetBeamSpotWidth",   m_setBeamSpotWidth   = 0.05);
 
-  declareProperty ("UseParamFromData",   m_useParamFromData   = false);
-
-  declareProperty ("UseErrIPParam",      m_useErrIPParam      = false);
   declareProperty ("HistoPrmVtxAtEF",    m_histoPrmVtxAtEF    = true);
   declareProperty ("UseEtaPhiTrackSel",  m_useEtaPhiTrackSel  = false);
-
-  declareProperty ("UseJetDirection",    m_useJetDirection);
-  declareProperty ("RetrieveHLTJets",    m_retrieveHLTJets    = true);
-  declareProperty ("TagHLTJets",         m_tagHLTJets         = 0);
 
   declareProperty ("TrkSel_Chi2",        m_trkSelChi2         = 0.001);
   declareProperty ("TrkSel_BLayer",      m_trkSelBLayer       = 1);
@@ -94,7 +86,7 @@ TrigBjetFex::TrigBjetFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareMonitoredVariable    ("roi_nTracks",       m_totTracks);
   declareMonitoredVariable    ("roi_nTracks_sel",   m_totSelTracks);
   declareMonitoredStdContainer("roi_stepsToSelect", m_listCutApplied, AutoClear);
-  declareMonitoredObject      ("roi_selectedTracks", *this, &TrigBjetFex::totSelectedTracks);
+  declareMonitoredObject      ("roi_selectedTracks", *this, &TrigDvFex::totSelectedTracks);
 
   declareMonitoredVariable    ("roi_deltaEtaJet",       m_deltaEtaJet,       AutoClear);
   declareMonitoredVariable    ("roi_deltaPhiJet",       m_deltaPhiJet,       AutoClear);
@@ -110,7 +102,7 @@ TrigBjetFex::TrigBjetFex(const std::string& name, ISvcLocator* pSvcLocator) :
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
 
-TrigBjetFex::~TrigBjetFex() 
+TrigDvFex::~TrigDvFex() 
 {
   if(m_taggerHelper)            delete m_taggerHelper;
   if(m_trigBjetPrmVtxInfo)      delete m_trigBjetPrmVtxInfo;
@@ -122,10 +114,10 @@ TrigBjetFex::~TrigBjetFex()
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
 
-HLT::ErrorCode TrigBjetFex::hltInitialize() 
+HLT::ErrorCode TrigDvFex::hltInitialize() 
 {
     // Get message service
-    ATH_MSG_INFO("Initializing TrigBjetFex, version " << PACKAGE_VERSION);
+    ATH_MSG_INFO("Initializing TrigDvFex, version " << PACKAGE_VERSION);
     // declareProperty overview
     ATH_MSG_DEBUG("declareProperty review:");
 
@@ -138,12 +130,6 @@ HLT::ErrorCode TrigBjetFex::hltInitialize()
     ATH_MSG_DEBUG(" UseBeamSpotFlag = "     << m_useBeamSpotFlag ); 
     ATH_MSG_DEBUG(" SetBeamSpotWidth = "    << m_setBeamSpotWidth );
 
-    ATH_MSG_DEBUG(" UseParamFromData = "    << m_useParamFromData ); 
-
-    ATH_MSG_DEBUG(" UseErrIPParam = "       << m_useErrIPParam ); 
-    ATH_MSG_DEBUG(" UseJetDirection = "     << m_useJetDirection ); 
-    ATH_MSG_DEBUG(" RetrieveHLTJets = "     << m_retrieveHLTJets ); 
-    ATH_MSG_DEBUG(" TagHLTJets = "          << m_tagHLTJets );
     ATH_MSG_DEBUG(" HistoPrmVtxAtEF = "     << m_histoPrmVtxAtEF );
     ATH_MSG_DEBUG(" UseEtaPhiTrackSel = "   << m_useEtaPhiTrackSel );
 
@@ -175,7 +161,7 @@ HLT::ErrorCode TrigBjetFex::hltInitialize()
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
 
-HLT::ErrorCode TrigBjetFex::getCollection(const xAOD::TrackParticleContainer*& pointerToEFTrackCollections,
+HLT::ErrorCode TrigDvFex::getTrackCollection(const xAOD::TrackParticleContainer*& pointerToEFTrackCollections,
                  const HLT::TriggerElement* whateverTE)
 {
     std::vector<const xAOD::TrackParticleContainer*> vectorOfEFTrackCollections;
@@ -202,7 +188,7 @@ HLT::ErrorCode TrigBjetFex::getCollection(const xAOD::TrackParticleContainer*& p
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
 
-HLT::ErrorCode TrigBjetFex::getPrmVtxCollection(const xAOD::VertexContainer*& pointerToEFPrmVtxCollections, 
+HLT::ErrorCode TrigDvFex::getPrmVtxCollection(const xAOD::VertexContainer*& pointerToEFPrmVtxCollections, 
 	const HLT::TriggerElement* whateverTE, const std::string & vtxkey) 
 {
     std::vector<const xAOD::VertexContainer*> vectorOfEFPrmVtxCollections;
@@ -246,7 +232,7 @@ HLT::ErrorCode TrigBjetFex::getPrmVtxCollection(const xAOD::VertexContainer*& po
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
 
-HLT::ErrorCode TrigBjetFex::getSecVtxCollection(const Trk::VxSecVertexInfoContainer*& pointerToSecVtxCollections,
+HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContainer*& pointerToSecVtxCollections,
        	const HLT::TriggerElement* whateverTE) 
 {
     std::vector<const Trk::VxSecVertexInfoContainer*> vectorOfSecVtxCollections;
@@ -298,9 +284,9 @@ HLT::ErrorCode TrigBjetFex::getSecVtxCollection(const Trk::VxSecVertexInfoContai
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
 
-  //HLT::ErrorCode TrigBjetFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& pointerToEFSecVtxCollections , const xAOD::VertexContainer*& pointerToEFPrmVtxCollections, const TrigVertexCollection*& pointerToPrmVtxCollections) {
+  //HLT::ErrorCode TrigDvFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& pointerToEFSecVtxCollections , const xAOD::VertexContainer*& pointerToEFPrmVtxCollections, const TrigVertexCollection*& pointerToPrmVtxCollections) {
 
-HLT::ErrorCode TrigBjetFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& pointerToEFSecVtxCollections, 
+HLT::ErrorCode TrigDvFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& pointerToEFSecVtxCollections, 
 					  const xAOD::Vertex* & pvselected) 
 {
     if(!pvselected)
@@ -419,7 +405,7 @@ HLT::ErrorCode TrigBjetFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& 
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
 
-bool TrigBjetFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i) 
+bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i) 
 {
     float zv = m_trigBjetPrmVtxInfo->zPrmVtx();
     
@@ -534,9 +520,9 @@ bool TrigBjetFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
 
-HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::TriggerElement* outputTE) 
+HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::TriggerElement* outputTE) 
 {
-    ATH_MSG_DEBUG("Executing TrigBjetFex");
+    ATH_MSG_DEBUG("Executing TrigDvFex");
 
     // Clear and initialize data members
     m_totSelTracks = 0;
@@ -569,7 +555,7 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
     // of the object muon, electron, MET, JET
     // -----------------------------------
     float m_et_EFjet = 0;
-    if(m_retrieveHLTJets && m_instance == "EF") 
+    if(m_instance == "EF") 
     {
 	std::vector<const TrigOperationalInfo*> m_vectorOperationalInfo;
     	if(getFeatures(inputTE, m_vectorOperationalInfo, "EFJetInfo") != HLT::OK) 
@@ -960,9 +946,9 @@ HLT::ErrorCode TrigBjetFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
 
-HLT::ErrorCode TrigBjetFex::hltFinalize() 
+HLT::ErrorCode TrigDvFex::hltFinalize() 
 {
-    ATH_MSG_INFO("Finalizing TrigBjetFex");
+    ATH_MSG_INFO("Finalizing TrigDvFex");
     return HLT::OK;
 }
 
