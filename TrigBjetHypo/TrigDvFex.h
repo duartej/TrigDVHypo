@@ -9,15 +9,15 @@
 // 
 // ************************************************
 
-#ifndef TRIGBJETFEX_H
-#define TRIGBJETFEX_H
+#ifndef TRIGDVFEX_H
+#define TRIGDVFEX_H
 
 #include "GaudiKernel/ToolHandle.h"
 
 #include "TrigInterfaces/FexAlgo.h"
 #include "TrigTrackJetFinderTool/ITrigTrackJetFinderTool.h"
-#include "TrigSteeringEvent/Enums.h"
-//#include "VxSecVertex/VxSecVertexInfo.h"
+//#include "TrigSteeringEvent/Enums.h"
+#include "VxSecVertex/VxSecVertexInfo.h"
 
 #include "TrigBjetHypo/TrigBjetDataHelper.h"
 
@@ -26,13 +26,19 @@
 #include<string>
 
 
-class HLT::TriggerElement;
+//class HLT::TriggerElement;  Enable by default
 
-class xAOD::TrackParticle;
-class xAOD::TrackParticleContainer;
-class xAOD::VertexContainer;
+// Not real classes, just typedefs
+//class xAOD::TrackParticle;
+//class xAOD::TrackParticleContainer;
+//class xAOD::VertexContainer;
+//
+//class Rec::TrackParticle; --> enabled by default
+//class Rec::TrackParticleContainer; --> enabled by default
 
-class Trk::VxSecVertexInfoContainer;
+//class Trk::VxSecVertexInfoContainer;  --> typedef in VxSecVertexInfo.h
+
+class VertexContainer;
 
 class TrigEFBjetContainer;
 

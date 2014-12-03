@@ -16,7 +16,7 @@
 //#include "TrigCaloEvent/TrigT2Jet.h"
 #include "TrigSteeringEvent/TrigRoiDescriptor.h"
 #include "EventInfo/EventInfo.h"
-//#include "EventInfo/EventID.h"
+#include "EventInfo/EventID.h"
 //#include "EventPrimitives/EventPrimitives.h"
 //#include "EventPrimitives/EventPrimitivesHelpers.h"
 
@@ -66,7 +66,7 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareProperty ("HistoPrmVtxAtEF",    m_histoPrmVtxAtEF    = true);
   declareProperty ("UseEtaPhiTrackSel",  m_useEtaPhiTrackSel  = false);
 
-  declareProperty ("TrkSel_Chi2",        m_trkSelChi2         = 0.001);
+  declareProperty ("TrkSel_Chi2",        m_trkSelChi2         = 0.0);
   declareProperty ("TrkSel_BLayer",      m_trkSelBLayer       = 1);
   declareProperty ("TrkSel_PixHits",     m_trkSelPixHits      = 2);
   declareProperty ("TrkSel_SiHits",      m_trkSelSiHits       = 4);
@@ -746,7 +746,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     }
 
     // Aux var: PV with higher sum_{tracks} pt^2
-    xAOD::Vertex *pvselected = 0;
+    const xAOD::Vertex *pvselected = 0;
     // Protect against null pointers
     if(pointerToEFPrmVtxCollections) 
     {
@@ -864,7 +864,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     m_deltaPhiJetTrkJet = m_trigBjetJetInfo->phiJet()-m_trigBjetJetInfo->phiTrkJet();
     
     // Get secondary vertex information at EF --> Do this first!!
-    HLT::ErrorCode statSVInfo = getSecVtxInfo(pointerToEFSecVtxCollections,pvselected);
+    //HLT::ErrorCode statSVInfo = getSecVtxInfo(pointerToEFSecVtxCollections,pvselected);
 
     // Some info to print if it is in the proper message level
     if(msgLvl() <= MSG::DEBUG) 
@@ -918,7 +918,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     // DV case: * Put a PV (a coll with the PV selected)
     TrigEFBjet* trigEFBjet = new TrigEFBjet(roiDescriptor->roiId(), 
 	    m_trigBjetJetInfo->etaJet(), m_trigBjetJetInfo->phiJet(),
-	    0, 0, 0, m_trigBjetPrmVtxIne fo->zPrmVtx(), m_trigBjetJetInfo->etJet(),
+	    0, 0, 0, m_trigBjetPrmVtxInfo->zPrmVtx(), m_trigBjetJetInfo->etJet(),
 	    -1,-1,-1, -1,-1,  // Note, i can use this to fill other stuff if I need 
 	    m_trigBjetSecVtxInfo->decayLengthSignificance(), m_trigBjetSecVtxInfo->vtxMass(), 
 	    m_trigBjetSecVtxInfo->energyFraction(), m_trigBjetSecVtxInfo->n2TrkVtx()); 
