@@ -8,6 +8,9 @@
 #include "TrigBjetHypo/TrigDvFex.h"
 #include "TaggerHelper.h"
 
+// Eigen library (Amg::error)
+#include "EventPrimitives/EventPrimitivesHelpers.h"
+
 //#include "TrigInDetEvent/TrigInDetTrackCollection.h"
 #include "Particle/TrackParticleContainer.h"
 //#include "TrigInDetEvent/TrigVertexCollection.h"
@@ -526,9 +529,11 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
 	m_mon_trk_z0_sel.push_back(track->z0());
 	m_mon_trk_z0_sel_PV.push_back(track->z0()-m_trigBjetPrmVtxInfo->zPrmVtx());
 
-	const float errIP1D = track->ez0();
-	const float errIP2D = trackk->ed0();
-	const float z0 = track->z0Corr()-m_trigBjetPrmVtxInfo->zPrmVtx();
+	// ez0
+	const float errIP1D = Amg::error(track->definingParametersCovMatrix(),1);
+	// ed0
+	const float errIP2D = Amg::error(track->definingParametersCovMatrix(),0);
+	const float z0 = track->z0()-m_trigBjetPrmVtxInfo->zPrmVtx();
 
 	float phiJetObject = 0.0;
 	float etaJetObject = 0.0; 
@@ -545,13 +550,13 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
 	    phiJetObject = m_trigBjetJetInfo->phiTrkJet();
 	    etaJetObject = m_trigBjetJetInfo->etaTrkJet();
     	} 
-	else if(m_trigBjetFex->m_useJetDirection == 3) 
+	else if(m_useJetDirection == 3) 
 	{
 	    // Using the LvL1 jet RoI 
 	    phiJetObject = m_trigBjetJetInfo->phiRoI();
-      	    etaJetObject = m__trigBjetJetInfo->etaRoI();
+      	    etaJetObject = m_trigBjetJetInfo->etaRoI();
     	}
-	const float d0Sign = m_taggerHelper->signedD0(track->d0Corr(), track->phi(), phiJetObject);
+	const float d0Sign = m_taggerHelper->signedD0(track->d0(), track->phi(), phiJetObject);
 	const float z0Sign = m_taggerHelper->signedZ0(z0, track->eta(), etaJetObject);
   	const float sigmaBeamSpot = (m_trigBjetPrmVtxInfo->xBeamSpotWidth()+
 		m_trigBjetPrmVtxInfo->yBeamSpotWidth())/2.0;
@@ -563,8 +568,8 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
 	}
 	if((fabs(errIP2D) > TOLERANCE) || sigmaBeamSpot)
 	{
-	    IP2D = d0Sign/sqrt(IPD2D*errIP2D+sigmaBeamSpot*sigmaBeamSpot)
-	};
+	    IP2D = d0Sign/sqrt(IP2D*errIP2D+sigmaBeamSpot*sigmaBeamSpot);
+	}
 	m_mon_trk_Sz0_sel.push_back(IP1D);
 	m_mon_trk_Sa0_sel.push_back(IP2D);
     }
@@ -991,7 +996,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
        	return HLT::ErrorCode(HLT::Action::ABORT_JOB, HLT::Reason::BAD_JOB_SETUP);
     }
     
-    HLT::ErrorCode stat = attachFeature(outputTE, m_trigEFBjetColl, "EFBjetFex");
+    HLT::ErrorCode stat = attachFeature(outputTE, m_trigEFBjetColl, "EFBjetDvFex");
     if(stat != HLT::OK) 
     {
 	ATH_MSG_DEBUG("Failed to attach TrigEFBjetContainer to navigation");
