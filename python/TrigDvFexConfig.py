@@ -1,7 +1,7 @@
 from TrigBjetHypo.TrigBjetHypoConf import TrigDvFex
 
 from AthenaCommon.Logging import logging
-from AthenaCommon.SystemOfUnits import mm, GeV
+from AthenaCommon.SystemOfUnits import mm, GeV,MeV
 
 def getDvFexInstance( instance, algo):
     return DvFex( instance, algo=algo, name="EFDvFex_"+algo )
@@ -45,11 +45,11 @@ class DvFex(TrigDvFex):
         if algo=="EFID" :
             self.TrkSel_Chi2    = 0.0
             self.TrkSel_BLayer  = 1
-            self.TrkSel_PixHits = 2
-            self.TrkSel_SiHits  = 4
+            self.TrkSel_PixHits = 0
+            self.TrkSel_SiHits  = 7
             self.TrkSel_D0      = 300.0*mm
-            self.TrkSel_Z0      = 300.0*mm
-            self.TrkSel_Pt      = 4.0*GeV
+            self.TrkSel_Z0      = 1500.0*mm
+            self.TrkSel_Pt      = 500.0*MeV
 
         from TrigTimeMonitor.TrigTimeHistToolConfig import TrigTimeHistToolConfig
         time = TrigTimeHistToolConfig("TimeHistogramForTrigBjetHypo")
