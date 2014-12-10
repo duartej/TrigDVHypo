@@ -292,10 +292,10 @@ HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContaine
 
 //** ----------------------------------------------------------------------------------------------------------------- **//
 
-
-  //HLT::ErrorCode TrigDvFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& pointerToEFSecVtxCollections , const xAOD::VertexContainer*& pointerToEFPrmVtxCollections, const TrigVertexCollection*& pointerToPrmVtxCollections) {
-
-HLT::ErrorCode TrigDvFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& pointerToEFSecVtxCollections, 
+// This method should use a new data-member called m_svcollection, in order to be sure we properly
+// set this collection in the getSecVtx or maybe this method should be absorbed in the getSecVtxCollection
+// method?? This will avoid a lot of cross-checsk and ifs...
+HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& pointerToEFSecVtxCollections, 
 					  const xAOD::Vertex* & pvselected) 
 {
     if(!pvselected)
@@ -307,14 +307,14 @@ HLT::ErrorCode TrigDvFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
     if(!pointerToEFSecVtxCollections) 
     {
 	ATH_MSG_DEBUG("No secondary vertex collection sent when extracting sec vtx info");
-    	return HLT::OK;
+    	return HLT::OK; // FIXME I need this, so you should stop the FEX
     }
   
     const Trk::VxSecVertexInfo* m_secVertexInfo = (*pointerToEFSecVtxCollections)[0];
     if(!m_secVertexInfo) 
     {   
        ATH_MSG_DEBUG("No secondary vertex when extracting sec vtx info");
-       return HLT::OK;
+       return HLT::OK; // FIXME I need this so you should stop the FEX
     }
   
     const Trk::VxSecVKalVertexInfo * myVKalSecVertexInfo = dynamic_cast<const Trk::VxSecVKalVertexInfo*>(m_secVertexInfo);
@@ -337,8 +337,6 @@ HLT::ErrorCode TrigDvFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
     m_trigBjetSecVtxInfo->setN2TrkVtx(myVKalSecVertexInfo->n2trackvertices());
     
     int NTracksInSV=0;
-    std::vector<xAOD::Vertex*>::const_iterator verticesIt=myVertices.begin();
-    std::vector<xAOD::Vertex*>::const_iterator verticesEnd=myVertices.end();
     
     if(myVertices.size()>1) 
     {
@@ -349,10 +347,10 @@ HLT::ErrorCode TrigDvFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
     {
         if(!(vertexIt)) 
         {
-    	ATH_MSG_DEBUG("Secondary vertex from InDetVKalVxInJet has zero pointer. Skipping this vtx..");
-    	continue;
+    	    ATH_MSG_DEBUG("Secondary vertex from InDetVKalVxInJet has zero pointer. Skipping this vtx..");
+    	    continue;
         }
-        ATH_MSG_DEBUG("VxCandidate at (" 
+        ATH_MSG_DEBUG("Secondary Vertex Candidate at (" 
     	    << vertexIt->position().x() << "," 
     	    << vertexIt->position().y() << "," 
          	    << vertexIt->position().z());
@@ -373,9 +371,11 @@ HLT::ErrorCode TrigDvFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
   
     //Calculate decay length and significance here
     //Use the same utilities as in InDetVKalVxInJet
+    // Note that this never happend because the pvselected should be filled at least at 000
     if(!pvselected) 
     {
-        return HLT::OK;
+	ATH_MSG_ERROR("Not filled properly the Primary Vertex (needed at least one default at (0,0,0)");
+        return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::UNKNOWN);
     }
   
     ATH_MSG_DEBUG("Primary vertex for decay length (" 
@@ -412,8 +412,6 @@ HLT::ErrorCode TrigDvFex::getSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
 
 
 //** ----------------------------------------------------------------------------------------------------------------- **//
-
-
 bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i) 
 {
     float zv = m_trigBjetPrmVtxInfo->zPrmVtx();
@@ -576,90 +574,11 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
 
     return true;
 }
-
-
 //** ----------------------------------------------------------------------------------------------------------------- **//
-
-
-HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::TriggerElement* outputTE) 
+HTL::ErrorCode checkxAODJets(const HLT::TriggerElement* inputTE)
 {
-    ATH_MSG_DEBUG("Executing TrigDvFex");
-
-    // Clear and initialize data members
-    m_totSelTracks = 0;
-    m_totTracks    = 0;
-  
-    m_trigBjetPrmVtxInfo->clear();
-    m_trigBjetSecVtxInfo->clear();
-    m_trigBjetJetInfo->clear();
-    // Track info
-    std::vector<TrigBjetTrackInfo> trigBjetTrackInfoVector;
-    m_trigBjetTrackInfoVector = &trigBjetTrackInfoVector;
-
-    // This is really horrible... 
-    //ATH_MSG_VERBOSE("Printing out inputTE will get rid of the compilation warning: " << inputTE);
-    // -----------------------------------
-    // Get RoI descriptor
-    // -----------------------------------
-    const TrigRoiDescriptor* roiDescriptor = 0;
-    if(getFeature(inputTE, roiDescriptor, m_jetKey) != HLT::OK) 
-    {
-	ATH_MSG_DEBUG("No feature for this Trigger Element");    	
-    	return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
-    }
-    ATH_MSG_DEBUG("Using TE: " << "RoI id " << roiDescriptor->roiId()
-	    << ", Phi = " <<  roiDescriptor->phi() << ", Eta = " << roiDescriptor->eta());
-  
-    // -----------------------------------
-    // Get EF jets (Do I need them?, yes when we work with the trigger DV+object)
-    // But, let's change the order, firts tracks: this should be a function depending
-    // of the object muon, electron, MET, JET
-    // -----------------------------------
-    float m_et_EFjet = 0;
-    if(m_instance == "EF") 
-    {
-	std::vector<const TrigOperationalInfo*> m_vectorOperationalInfo;
-    	if(getFeatures(inputTE, m_vectorOperationalInfo, "EFJetInfo") != HLT::OK) 
-	{
-	    ATH_MSG_WARNING("Failed to get TrigOperationalInfo");
-	    return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
-      	}
-	else 
-    	{
-    	    ATH_MSG_DEBUG("Number of TrigOperationalInfo objects: " << m_vectorOperationalInfo.size());
-    	}
-
-	// -----------------------------------
-        // Get operational info
-        // -----------------------------------
-        std::vector<const TrigOperationalInfo*>::const_iterator m_operationalInfo;
-        for(m_operationalInfo=m_vectorOperationalInfo.begin(); 
-    	    m_operationalInfo!=m_vectorOperationalInfo.end(); ++m_operationalInfo) 
-        {
-	    if( (*m_operationalInfo)->defined("EFJetEt")==1 ) 
-    	    {
-    		unsigned int m_etSize = (*m_operationalInfo)->infos().first.size();
-    		// JDC:: I think by construction, this case it cannot be... not sure
-		//     	 look at TrigOperationalInfo implementation
-		if(m_etSize!=1) 
-    		{
-     		    ATH_MSG_WARNING("More than one Et threshold associated to the same EF jet");
-    		    return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
-    		}
-    		m_et_EFjet = (*m_operationalInfo)->get("EFJetEt");
-	    }
-        }
-    }
-  
-    // Set properties of the EF-jet 
-    m_trigBjetJetInfo->setEtaPhiJet(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
-    m_trigBjetJetInfo->setEtaPhiRoI(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
-    m_trigBjetJetInfo->setEtJet(m_et_EFjet);
-  
-    //xAOD jets from TE
-    ATH_MSG_DEBUG( "pass 1 " << m_et_EFjet);
-  
-    const xAOD::JetContainer* jets(0); // JDC:: Check this initialization, shoudn't be "const ... * jet = 0;"?
+    //const xAOD::JetContainer* jets(0);
+    const xAOD::JetContainer* jets = 0;
     HLT::ErrorCode ec = getFeature(inputTE, jets, m_jetKey);
     if(ec!=HLT::OK) 
     {
@@ -701,7 +620,97 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     	    ATH_MSG_DEBUG("  ["<<i<<"-Jet]: Et=" << aJet->p4().Et() << "(GeV), Eta=" << aJet->p4().Eta());
     	}
     }
+
+    return HLT::OK;
+}
  
+
+
+//** ----------------------------------------------------------------------------------------------------------------- **//
+
+// CAVEAT!! Be careful with the use of inputTE which maybye doesn't have all the features which is suppose
+// to have. The ouputTE is going to contain, in some cases, references to objects related to just processed
+// RoI (in the previous sequences, which are actually executing this sequence...). So, if you find problems
+// just use outputTE, which is safer (although inputTE is slightly faster, marginaly in fact)
+HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::TriggerElement* outputTE) 
+{
+    ATH_MSG_DEBUG("Executing TrigDvFex");
+
+    // Clear and initialize data members
+    m_totSelTracks = 0;
+    m_totTracks    = 0;
+  
+    m_trigBjetPrmVtxInfo->clear();
+    m_trigBjetSecVtxInfo->clear();
+    m_trigBjetJetInfo->clear();
+    // Track info
+    std::vector<TrigBjetTrackInfo> trigBjetTrackInfoVector;
+    m_trigBjetTrackInfoVector = &trigBjetTrackInfoVector;
+
+    // -----------------------------------
+    // Get RoI descriptor
+    // -----------------------------------
+    const TrigRoiDescriptor* roiDescriptor = 0;
+    if(getFeature(inputTE, roiDescriptor, m_jetKey) != HLT::OK) 
+    {
+	ATH_MSG_DEBUG("No feature for this Trigger Element");    	
+    	return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
+    }
+    ATH_MSG_DEBUG("Using TE: " << "RoI id " << roiDescriptor->roiId()
+	    << ", Phi = " <<  roiDescriptor->phi() << ", Eta = " << roiDescriptor->eta());
+  
+    // -----------------------------------
+    // Get EF jets (Do I need them?, yes when we work with the trigger DV+object)
+    // But, let's change the order, firts tracks: this should be a function depending
+    // of the object muon, electron, MET, JET
+    // -----------------------------------
+    float m_et_EFjet = 0;
+    if(m_instance == "EF") 
+    {
+	std::vector<const TrigOperationalInfo*> m_vectorOperationalInfo;
+    	if(getFeatures(inputTE, m_vectorOperationalInfo, "EFJetInfo") != HLT::OK) 
+	{
+	    ATH_MSG_WARNING("Failed to get TrigOperationalInfo");
+	    return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
+      	}
+	else 
+    	{
+    	    ATH_MSG_DEBUG("Number of TrigOperationalInfo objects: " << m_vectorOperationalInfo.size());
+    	}
+
+	// -----------------------------------
+        // Get operational info
+        // -----------------------------------
+        std::vector<const TrigOperationalInfo*>::const_iterator m_operationalInfo;
+        for(m_operationalInfo=m_vectorOperationalInfo.begin(); 
+    	    m_operationalInfo!=m_vectorOperationalInfo.end(); ++m_operationalInfo) 
+        {
+	    if( (*m_operationalInfo)->defined("EFJetEt")==1 ) 
+    	    {
+    		unsigned int m_etSize = (*m_operationalInfo)->infos().first.size();
+		if(m_etSize!=1) 
+    		{
+     		    ATH_MSG_WARNING("More than one Et threshold associated to the same EF jet");
+    		    return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
+    		}
+    		m_et_EFjet = (*m_operationalInfo)->get("EFJetEt");
+	    }
+        }
+    }
+  
+    // Set properties of the EF-jet 
+    m_trigBjetJetInfo->setEtaPhiJet(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
+    m_trigBjetJetInfo->setEtaPhiRoI(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
+    m_trigBjetJetInfo->setEtJet(m_et_EFjet);
+  
+    //xAOD jets from TE
+    ATH_MSG_DEBUG( "pass 1 " << m_et_EFjet);
+    HLT::ErrorCode xaodc = checkxAODJets(inputTE);
+    if( xaodc != HLT::OK )
+    {
+	return xadoc;
+    }	
+  
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Ready to get the tracks & vertices
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -928,7 +937,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     m_deltaPhiJetTrkJet = m_trigBjetJetInfo->phiJet()-m_trigBjetJetInfo->phiTrkJet();
     
     // Get secondary vertex information at EF --> Do this first!!
-    //HLT::ErrorCode statSVInfo = getSecVtxInfo(pointerToEFSecVtxCollections,pvselected);
+    HLT::ErrorCode statSVInfo = setSecVtxInfo(pointerToEFSecVtxCollections,pvselected);
 
     // Some info to print if it is in the proper message level
     if(msgLvl() <= MSG::DEBUG) 

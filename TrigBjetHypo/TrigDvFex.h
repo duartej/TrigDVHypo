@@ -90,8 +90,10 @@ class TrigDvFex: public HLT::FexAlgo
       	HLT::ErrorCode getPrmVtxCollection(const xAOD::VertexContainer*&, const HLT::TriggerElement*,const std::string&);
       	/** @brief To retrieve secondary vertex collections reconstructed and stored in Trk::VxSecVertexInfoContainer. */
       	HLT::ErrorCode getSecVtxCollection(const Trk::VxSecVertexInfoContainer*&, const HLT::TriggerElement*);
-      	/** @brief To retrieve the EF secondary vertex information. */
-  	HLT::ErrorCode getSecVtxInfo(const Trk::VxSecVertexInfoContainer*&, const xAOD::Vertex*&);
+      	/** @brief To set the datamember related with the EF secondary vertex information. */
+  	HLT::ErrorCode setSecVtxInfo(const Trk::VxSecVertexInfoContainer*&, const xAOD::Vertex*&);
+      	/** @brief To check if there are a well formed xAOD::Jet collection attached to the TE. */
+	HTL::ErrorCode checkxAODJets(const HLT::TriggerElement*);
 	
       	/** @brief To select EF tracks. */
       	bool efTrackSel(const xAOD::TrackParticle*&, unsigned int);
