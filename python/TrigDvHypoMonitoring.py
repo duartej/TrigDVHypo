@@ -5,21 +5,20 @@ class TrigDvHypoMonitoring(TrigGenericMonitoringToolConfig):
         super(TrigDvHypoMonitoring, self).__init__(name)
         # ----> remove this line and change labels and ranges  
         self.Histograms = [ defineHistogram('CutCounter', type='TH1F', title="Bjet Hypo cut counter",
-                                            xbins=4, xmin=-1.5, xmax=2.5,
-                                            labels='No Bjet obj:No usable beam spot:Rejected:Accepted') ]
+            xbins=4, xmin=-1.5, xmax=2.5,labels='No Bjet obj:No usable beam spot:Rejected:Accepted') ]
 
 
-class TrigDvEFBjetHypoValidationMonitoring(TrigDvHypoMonitoring):
+class TrigEFDvHypoValidationMonitoring(TrigDvHypoMonitoring):
     def __init__ (self, name="TrigDvEFBjetHypoValidationMonitoring"):
-        super(TrigDvEFBjetHypoValidationMonitoring, self).__init__(name)
+        super(TrigEFDvHypoValidationMonitoring, self).__init__(name)
 
         self.defineTarget("Validation")
 
 
 
-class TrigDvEFBjetHypoOnlineMonitoring(TrigDvHypoMonitoring):
+class TrigEFDvHypoOnlineMonitoring(TrigDvHypoMonitoring):
     def __init__ (self, name="TrigDvEFBjetHypoOnlineMonitoring"):
-        super(TrigDvEFBjetHypoOnlineMonitoring, self).__init__(name)
+        super(TrigEFDvHypoOnlineMonitoring, self).__init__(name)
 
         self.defineTarget("Online")
 

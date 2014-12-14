@@ -1,4 +1,4 @@
-from TrigDvHypo.TrigDvHypoConf import TrigDvHypo
+from TrigBjetHypo.TrigBjetHypoConf import TrigDvHypo
 
 from AthenaCommon.Logging import logging
 from AthenaCommon.SystemOfUnits import GeV
@@ -37,18 +37,19 @@ class DvHypo (TrigDvHypo):
             self.Instance  = "EF"
             self.UseBeamSpotFlag = False
 
-        self.JetKey = ""
-        
-        if instance=="EF" :
-            from TrigDvHypo.TrigDvHypoMonitoring import TrigEFDvHypoValidationMonitoring, TrigEFDvHypoOnlineMonitoring
-            validation = TrigEFDvHypoValidationMonitoring()
-            online     = TrigEFDvHypoOnlineMonitoring()
+        self.JetKey = "SplitJet"  # FIXME: EVERYTHING SPLIT
         
         from TrigTimeMonitor.TrigTimeHistToolConfig import TrigTimeHistToolConfig
         time = TrigTimeHistToolConfig("TimeHistogramForTrigDvHypo")
         time.TimerHistLimits = [0,0.4]
         
-        self.AthenaMonTools = [ time, validation, online ]
+        self.AthenaMonTools = [ time ]
+        
+        if instance=="EF" :
+            from TrigBjetHypo.TrigDvHypoMonitoring import TrigEFDvHypoValidationMonitoring, TrigEFDvHypoOnlineMonitoring
+            validation = TrigEFDvHypoValidationMonitoring()
+            online     = TrigEFDvHypoOnlineMonitoring()
+            self.AthenaMonTools += [validation,online]
             
 
 class DvHypoNoCut (TrigDvHypo):
@@ -61,24 +62,24 @@ class DvHypoNoCut (TrigDvHypo):
                 
         AllowedInstances = ["EF"]
 
-        self.JetKey = ""
+        self.JetKey = "SplitJet"  # FIXME EVERY THING SPLIT!!
         
         if instance in AllowedInstances :
+            from TrigTimeMonitor.TrigTimeHistToolConfig import TrigTimeHistToolConfig
+            time = TrigTimeHistToolConfig("TimeHistogramForTrigDvHypo")
+            time.TimerHistLimits = [0,0.4]
+
+            self.AthenaMonTools = [ time ]
             
             if instance=="EF" :
                 self.AcceptAll = True
                 self.Instance  = "EF"
                 self.UseBeamSpotFlag = False
-                from TrigDvHypo.TrigDvHypoMonitoring import TrigEFDvHypoValidationMonitoring, TrigEFDvHypoOnlineMonitoring
+                from TrigBjetHypo.TrigDvHypoMonitoring import TrigEFDvHypoValidationMonitoring, TrigEFDvHypoOnlineMonitoring
                 validation = TrigEFDvHypoValidationMonitoring()
                 online     = TrigEFDvHypoOnlineMonitoring()
+                self.AthenaMonTools += [ validation, online ]
         
-            from TrigTimeMonitor.TrigTimeHistToolConfig import TrigTimeHistToolConfig
-            time = TrigTimeHistToolConfig("TimeHistogramForTrigDvHypo")
-            time.TimerHistLimits = [0,0.4]
-
-            self.AthenaMonTools = [ time, validation, online ]
-
         else :
             mlog.error("Instance "+instance+" is not supported!")
             return None
@@ -108,16 +109,18 @@ class DvHypoSplit (TrigDvHypo):
 
         self.JetKey = "SplitJet"
         
-        if instance=="EF" :
-            from TrigDvHypo.TrigDvHypoMonitoring import TrigEFDvHypoValidationMonitoring, TrigEFDvHypoOnlineMonitoring
-            validation = TrigEFDvHypoValidationMonitoring()
-            online     = TrigEFDvHypoOnlineMonitoring()
-        
         from TrigTimeMonitor.TrigTimeHistToolConfig import TrigTimeHistToolConfig
         time = TrigTimeHistToolConfig("TimeHistogramForTrigDvHypo")
         time.TimerHistLimits = [0,0.4]
         
-        self.AthenaMonTools = [ time, validation, online ]
+        self.AthenaMonTools = [ time ]
+
+        if instance=="EF" :
+            from TrigBjetHypo.TrigDvHypoMonitoring import TrigEFDvHypoValidationMonitoring, TrigEFDvHypoOnlineMonitoring
+            validation = TrigEFDvHypoValidationMonitoring()
+            online     = TrigEFDvHypoOnlineMonitoring()
+            self.AthenaMonTools += [ validation, online ]
+        
             
 
 
@@ -134,20 +137,20 @@ class DvHypoSplitNoCut (TrigDvHypo):
         self.JetKey = "SplitJet"
         
         if instance in AllowedInstances :
+            from TrigTimeMonitor.TrigTimeHistToolConfig import TrigTimeHistToolConfig
+            time = TrigTimeHistToolConfig("TimeHistogramForTrigDvHypo")
+            time.TimerHistLimits = [0,0.4]
+
+            self.AthenaMonTools = [ time ]
             
             if instance=="EF" :
                 self.AcceptAll = True
                 self.Instance  = "EF"
                 self.UseBeamSpotFlag = False
-                from TrigDvHypo.TrigDvHypoMonitoring import TrigEFDvHypoValidationMonitoring, TrigEFDvHypoOnlineMonitoring
+                from TrigBjetHypo.TrigDvHypoMonitoring import TrigEFDvHypoValidationMonitoring, TrigEFDvHypoOnlineMonitoring
                 validation = TrigEFDvHypoValidationMonitoring()
                 online     = TrigEFDvHypoOnlineMonitoring()
-        
-            from TrigTimeMonitor.TrigTimeHistToolConfig import TrigTimeHistToolConfig
-            time = TrigTimeHistToolConfig("TimeHistogramForTrigDvHypo")
-            time.TimerHistLimits = [0,0.4]
-
-            self.AthenaMonTools = [ time, validation, online ]
+                self.AthenaMonTools += [validation,online]        
 
         else :
             mlog.error("Instance "+instance+" is not supported!")
