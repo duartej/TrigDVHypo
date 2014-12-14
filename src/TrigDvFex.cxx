@@ -575,7 +575,7 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     return true;
 }
 //** ----------------------------------------------------------------------------------------------------------------- **//
-HTL::ErrorCode checkxAODJets(const HLT::TriggerElement* inputTE)
+HLT::ErrorCode TrigDvFex::checkxAODJets(const HLT::TriggerElement* inputTE)
 {
     //const xAOD::JetContainer* jets(0);
     const xAOD::JetContainer* jets = 0;
@@ -708,7 +708,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     HLT::ErrorCode xaodc = checkxAODJets(inputTE);
     if( xaodc != HLT::OK )
     {
-	return xadoc;
+	return xaodc;
     }	
   
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

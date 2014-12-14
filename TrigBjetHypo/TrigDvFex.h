@@ -93,7 +93,7 @@ class TrigDvFex: public HLT::FexAlgo
       	/** @brief To set the datamember related with the EF secondary vertex information. */
   	HLT::ErrorCode setSecVtxInfo(const Trk::VxSecVertexInfoContainer*&, const xAOD::Vertex*&);
       	/** @brief To check if there are a well formed xAOD::Jet collection attached to the TE. */
-	HTL::ErrorCode checkxAODJets(const HLT::TriggerElement*);
+	HLT::ErrorCode checkxAODJets(const HLT::TriggerElement*);
 	
       	/** @brief To select EF tracks. */
       	bool efTrackSel(const xAOD::TrackParticle*&, unsigned int);
