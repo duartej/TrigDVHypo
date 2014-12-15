@@ -26,7 +26,8 @@ def sequenceinfo(dictchain):
 
 include("RecExCond/RecExCommon_flags.py")
 
-from TriggerMenu.bjet.BjetSliceFlags import * 
+from TriggerMenu.test.TestSliceFlags import * 
+#from TriggerMenu.bjet.BjetSliceFlags import * 
 #from TriggerJobOpts.TriggerFlags import TriggerFlags  <-- already imported in the line above
 
 # Test the current chains in the Bjet slice taking the MC_pp_v5 menu 
@@ -49,9 +50,8 @@ from TriggerMenu.bjet.BjetSliceFlags import *
 
 # --- Or including our own chain names...
 PhysicsStream='Main'
-TriggerFlags.BjetSlice.signatures = [
-        ['j55_boffperf',                  8,    'L1_J20',[],  [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
-        ['dv_j55',                  8,    'L1_J20',[],  [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
+TriggerFlags.TestSlice.signatures = [
+#        ['j55_boffperf',                  8,    'L1_J20',[],  [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
 #        ['j55_bperf',                    10,    'L1_J20',[],  [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
 #        ['j45_bperf_3j45',               11,    'L1_3J15',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
 #        ['j45_bperf_3j45_L13J150ETA24',  12,    'L1_3J15.0ETA24',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
@@ -64,14 +64,16 @@ TriggerFlags.BjetSlice.signatures = [
 #        ['j300_bloose',                   9,    'L1_J100',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
 #
 #        # split configuration: --> using bperf to associate the 'bTag' key needed in GenerateMenu
-        ['dv_3j45_bperf_split_L13J150ETA24',  34,    'L1_3J15.0ETA24',[], [PhysicsStream], ['RATE:MultiJet','BW:Jets'],-1],
-        ['dv_3j45_bperf_split_L13J20',        35,    'L1_3J20',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
-        ['dv_j175_bperf_split',                 36,    'L1_J100',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
-        ['dv_3j75_bperf_split',             37,    'L1_4J20',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
-        ['dv_2j55_bperf_split',            38,    'L1_4J20',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
-        ['dv_3j45_bperf_split',            39,    'L1_5J15.0ETA24',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
-        ['dv_2j60j175_bperf_split',40,   'L1_J100',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
-        ['dv_j300_bperf_split',                   41,   'L1_J100',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
+        ['dv_TestChain45',               901,    'L1_3J15.0ETA24',[], [PhysicsStream], ['RATE:MultiJet','BW:Jets'],-1],
+        ['dv_TestChain55',               902,    'L1_3J15.0ETA24',[], [PhysicsStream], ['RATE:MultiJet','BW:Jets'],-1],
+        ['dv_3TestChain45_L13J150ETA24', 903,    'L1_3J15.0ETA24',[], [PhysicsStream], ['RATE:MultiJet','BW:Jets'],-1],
+        ['dv_3TestChain45_L13J20',       904,    'L1_3J20',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
+        ['dv_1TestChain75',              905,    'L1_J100',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
+        ['dv_3TestChain75',              906,    'L1_4J20',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
+        ['dv_2TestChain55',              907,    'L1_4J20',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
+        ['dv_3TestChain45',              908,    'L1_5J15.0ETA24',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
+        ['dv_2TestChain60_1TestChain175',909,   'L1_J100',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
+        ['dv_TestChain300',              910,   'L1_J100',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
 #        ['j45_bperf_split_3j45',               33,    'L1_3J15',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
 #        ['j45_bperf_split_3j45_L13J150ETA24',  34,    'L1_3J15.0ETA24',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
 #        ['j45_bperf_split_3j45_L13J20',        35,    'L1_3J20',[], [PhysicsStream], ['RATE:MultiJet', 'BW:Jets'], -1],
@@ -90,17 +92,29 @@ gdch = chext.DictFromChainName()
 #chains ={}
 #for i in TriggerFlags.BjetSlice.signatures():
 #    chains[i[0]] = gdch.getChainDict(i)
-chains = dict(map(lambda x: (x[0],gdch.getChainDict(x)),TriggerFlags.BjetSlice.signatures()))
+chains = dict(map(lambda x: (x[0],gdch.getChainDict(x)),TriggerFlags.TestSlice.signatures()))
 
 from TriggerMenu import useNewTriggerMenu
 useNewTM = useNewTriggerMenu()
 #log.info("Using new TriggerMenu: %r" % useNewTM)
 
 from AthenaCommon.Include import include
-from TriggerMenu.bjet import generateBjetChainDefs
+from TriggerMenu.test import generateDvChainDefs
 chDefs = {}
 for trname,signature in chains.iteritems():
-    chDefs[trname]=generateBjetChainDefs.generateChainDefs(signature)
+    chDefs[trname]=generateDvChainDefs.generateChainDefs(signature)
+
+# --- Final test
+# --- Very final test
+#def onlyTest():
+#    TriggerFlags.Slices_all_setOff()
+#from TriggerMenu.menu import GenerateMenu
+#gm = GenerateMenu.GenerateMenu()
+##chDefsFM= {}
+##for trname,signature in chains.iteritems():
+##    chDefsFM[trname]=gm.getChainDef(signature)
+#GenerateMenu.GenerateMenu.overwriteSignaturesWith(onlyTest)
+#gm.generate()
 
 print "Ready to check things!!! Remember chain definitions availables"
 print "at 'chDefs' object (chainDefs). Use 'sequenceinfo' function to print info about them"
