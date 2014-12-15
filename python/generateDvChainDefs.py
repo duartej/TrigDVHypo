@@ -11,6 +11,24 @@ from TriggerMenu.menu.MenuUtils import *
 import pprint
 pp = pprint.PrettyPrinter(indent=4, depth=8)
 
+
+def __rechaindict__(c):
+    """To be deprecated, just for the testing procedure
+    """
+    from TriggerMenu.menu.DictFromChainName import DictFromChainName
+    dfcn = DictFromChainName()
+
+    pl1 = []
+    for pch in c['chainParts']:
+        pl1.append(pch['L1item'])
+
+    newname = c['chainName'].replace('dv_','').replace('TestChain','j')
+    nchlist = [ newname ,c['chainCounter'],c['L1item'],pl1,c['stream'],
+            c['groups'],c['EBstep'] ]
+    
+    return dfcn.getChainDict(nchlist)
+
+
 ###########################################################################
 ###########################################################################
 # Note that the chainDict can be generated from the ChainName list (see in 
@@ -20,7 +38,14 @@ pp = pprint.PrettyPrinter(indent=4, depth=8)
 # chain dict--> you should modify the analysisShortName method or hardcoded 
 # the chainDict in order to accept a new chain name... By the moment I'm useing
 # the jX_bperf_split as handlers to our triggers!
-def generateChainDefs(chainDict):
+def generateChainDefs(__chainDict):
+    # TESTING
+    logDvDef.warning("TESTING DV-Triggers: using Test Slice!")
+    logDvDef.warning("TESTING DV-Triggers: Re-building the chainDict from '%s'" 
+            % __chainDict['chainName'])
+    logDvDef.warning("TESTING DV-Triggers: This is a provisional behaviour while testing")
+    chainDict = __rechaindict__(__chainDict)
+    # TESTING
 
     from copy import deepcopy
     chainDict_orig = deepcopy(chainDict)
@@ -35,6 +60,8 @@ def generateChainDefs(chainDict):
     elif (n_chainParts == 1):
         logDvDef.debug('Only one chain part dictionary for this chain.')
         jetchainDict = chainDict
+    #if(n_chainParts > 0):
+    #    jetchainDict = chainDict
     else:
         raise RuntimeError('No chain parts found for chain %s' % (chainDict['chainName']))
     #----------------------------------------------------------------------------
@@ -42,7 +69,7 @@ def generateChainDefs(chainDict):
     #----------------------------------------------------------------------------
     # --- obtain jet chain def used as inputTE for first btag sequence ---
     # ----> This can be substitute depending the input TE RoI (muon,egamma)
-    primaryobjectchainname = jetchainDict['chainName'].replace('dv_','')
+    primaryobjectchainname = jetchainDict['chainName'].replace('dv_','').replace('TestChain','j')
     # -- new dictionary for pure jet (muon,egamma) object trigger
     pochaindict = deepcopy(chainDict)
     pochaindict['chainName'] = primaryobjectchainname
@@ -162,12 +189,13 @@ def buildDvChains(jchaindef,dvjetdict,doAtL2AndEF=True,numberOfSubChainDicts=1):
 
     dvjetparts = dvjetdict['chainParts']
 
-    if ('split' in dvjetparts['bConfig']):
-        theDvChainDef = myDvConfig_split(jchaindef, dvjetdict, inputTEsEF,numberOfSubChainDicts) 
-        theDvChainDef.chain_name = 'HLT_'+dvjetdict['chainName']
-    else:
-        theDvChainDef = myDvConfig1(jchaindef, dvjetdict, inputTEsEF,numberOfSubChainDicts) 
-        theDvChainDef.chain_name = 'HLT_'+dvjetdict['chainName']
+    # Always use the split version
+    #if ('split' in dvjetparts['bConfig']):
+    theDvChainDef = myDvConfig_split(jchaindef, dvjetdict, inputTEsEF,numberOfSubChainDicts) 
+    theDvChainDef.chain_name = 'HLT_'+dvjetdict['chainName']
+    #else:
+    #    theDvChainDef = myDvConfig1(jchaindef, dvjetdict, inputTEsEF,numberOfSubChainDicts) 
+    #    theDvChainDef.chain_name = 'HLT_'+dvjetdict['chainName']
 
     return theDvChainDef
 
@@ -183,9 +211,11 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     chainParts = chainDict['chainParts']
     btagthresh = chainParts['threshold']
     btagmult = chainParts['multiplicity']
-    btagcut = chainParts['bTag']
-    btagcut = btagcut[1:]
-    btracking = chainParts['bTracking']
+    #btagcut = chainParts['bTag']
+    #btagcut = btagcut[1:]
+    #btracking = chainParts['bTracking']
+    btracking="EFID"
+    chainParts['bTracking']=btracking
 
 
     #-----------------------------------------------------------------------------------
@@ -209,7 +239,7 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     from TrigBjetHypo.TrigJetSplitterAllTEConfig import getJetSplitterAllTEInstance
     theJetSplit=getJetSplitterAllTEInstance()
     #theJetSplit.JetOuputKey="SplitJetDv" #es necesario? quizas si para asegurarme que utilizo l
-    #                                    # los  mios? Es posible compartir objetos entre diferentes secuencias??
+    #                       # los  mios? Es posible compartir objetos entre diferentes secuencias??
 
     #--------------------
 
@@ -300,14 +330,16 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     # TE naming
     #-----------------------------------------------------------------------------------
     
-    if ('EFID' in chainParts['bTracking']): tracking = 'EFID'
-    else: tracking = "IDTrig"
+    if 'EFID' in btracking: 
+        tracking = 'EFID'
+    else: 
+        tracking = "IDTrig"
 
     jetHypoTE = "HLT_j"+btagthresh+"_eta"    #  Jets eta/pt cut
     jetSplitTE = jetHypoTE+"_jsplit"         #  Jets splitted in several TE
     jetTrackTE = jetSplitTE+"_"+tracking     #  Jets reconstructed at HLT
-    superTE = "HLT_super"                    #  One SuperRoI only
-    superTrackingTE = superTE+tracking       #  Tracking in the SuperRoI
+    superTE = "HLT_super_"+btagthresh        #  One SuperRoI only
+    superTrackingTE = superTE+"_"+tracking       #  Tracking in the SuperRoI
     prmVertexTE = superTrackingTE+"_prmVtx"  #  PrmVtx obtained with the SuperRoI tracking
     comboPrmVtxTE = prmVertexTE+"Combo"      #  PrmVtx as above, but using other algo
     secVtxTE = jetTrackTE+"__"+"superVtx"    #  Secondary Vertices
