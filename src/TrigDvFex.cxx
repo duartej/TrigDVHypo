@@ -204,11 +204,11 @@ HLT::ErrorCode TrigDvFex::getPrmVtxCollection(const xAOD::VertexContainer*& poin
     HLT::ErrorCode status = getFeatures(whateverTE, vectorOfEFPrmVtxCollections, vtxkey);
     if(status != HLT::OK) 
     {
-    	ATH_MSG_ERROR("Failed to get xAOD::VertexContainer from the trigger element");
+        ATH_MSG_ERROR("Failed to get xAOD::VertexContainer from the trigger element");
     } 
     else
     {
-	ATH_MSG_DEBUG("Got " << vectorOfEFPrmVtxCollections.size() << " xAOD::VertexContainer");
+        ATH_MSG_DEBUG("Got " << vectorOfEFPrmVtxCollections.size() << " xAOD::VertexContainer");
     }
     
     std::vector<const xAOD::VertexContainer*>::iterator pPrmVtxColl    = vectorOfEFPrmVtxCollections.begin();
@@ -217,23 +217,25 @@ HLT::ErrorCode TrigDvFex::getPrmVtxCollection(const xAOD::VertexContainer*& poin
     for(; pPrmVtxColl != lastPrmVtxColl; ++pPrmVtxColl)
     {
         ATH_MSG_DEBUG("Size of pPrmVtxColl = " << (*pPrmVtxColl)->size());
-	if((*pPrmVtxColl)->size() == 0)
-	{
-	    continue;
-	}
-	ATH_MSG_VERBOSE("xAOD::VertexContainer with label " << (*pPrmVtxColl)->front()->vertexType());    
-	if( (*pPrmVtxColl)->front()->vertexType() != xAOD::VxType::PriVtx )
-	{
-	    continue;
-	}
-	ATH_MSG_DEBUG("Selected collection with Primary Vertex label ");
-      	ATH_MSG_DEBUG("First PV has z-position = " <<  (*pPrmVtxColl)->front()->z());
-
-	pointerToEFPrmVtxCollections = *pPrmVtxColl;
-	return HLT::OK;
+        if((*pPrmVtxColl)->size() == 0)
+        {
+            continue;
+        }
+        ATH_MSG_VERBOSE("xAOD::VertexContainer with label " << (*pPrmVtxColl)->front()->vertexType());    
+        if( (*pPrmVtxColl)->front()->vertexType() != xAOD::VxType::PriVtx )
+        {
+            continue;
+        }
+        ATH_MSG_DEBUG("Selected collection with Primary Vertex label ");
+        ATH_MSG_DEBUG("First PV has z-position = " <<  (*pPrmVtxColl)->front()->z());
+        
+        pointerToEFPrmVtxCollections = *pPrmVtxColl;
+        return HLT::OK;
     }
     // Didn't found any PV 
     pointerToEFPrmVtxCollections = 0;
+    ATH_MSG_DEBUG("Not found any Primary Vertex valid collection!");
+    // return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
     return HLT::ErrorCode(HLT::Action::ABORT_CHAIN,HLT::Reason::MISSING_FEATURE);
 }
 
@@ -260,33 +262,34 @@ HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContaine
     // JDC:: What's the logic? A vector of vectors of sec. vtx. 
     for( ; pSecVtxColl != lastSecVtxColl; ++pSecVtxColl)
     {
-	if((*pSecVtxColl)->size() == 0)
-	{
-	    continue;
-	}
-
-	const std::vector<xAOD::Vertex*> vectorOfVxCandidates = (*pSecVtxColl)->front()->vertices();
-
-	if(vectorOfVxCandidates.size() == 0)
-	{
-	    continue;
-	}
-
-	ATH_MSG_VERBOSE("VxSecVertexInfoContainer with label type " << 
-		(*vectorOfVxCandidates.begin())->vertexType());
-	
-	if((*vectorOfVxCandidates.begin())->vertexType() == 2) 
-	{
-	    ATH_MSG_DEBUG("Selected collection with Secondary Vertex label"); 
-	    ATH_MSG_DEBUG("First SV has z-position = " << (*vectorOfVxCandidates.begin())->z());
-	    // Just need the first one? I'm assuming the previous alg, put all the SV in the same set
-	    pointerToSecVtxCollections = *pSecVtxColl;
-	    return HLT::OK;
-	}
+	    if((*pSecVtxColl)->size() == 0)
+        {   
+            continue;
+        }
+        const std::vector<xAOD::Vertex*> vectorOfVxCandidates = (*pSecVtxColl)->front()->vertices();
+    
+        if(vectorOfVxCandidates.size() == 0)
+        {
+            continue;
+        }
+        
+        ATH_MSG_VERBOSE("VxSecVertexInfoContainer with label type " << 
+                (*vectorOfVxCandidates.begin())->vertexType());
+        
+        if((*vectorOfVxCandidates.begin())->vertexType() == 2) 
+        {
+            ATH_MSG_DEBUG("Selected collection with Secondary Vertex label"); 
+            ATH_MSG_DEBUG("First SV has z-position = " << (*vectorOfVxCandidates.begin())->z());
+            // Just need the first one? I'm assuming the previous alg, put all the SV in the same set
+            pointerToSecVtxCollections = *pSecVtxColl;
+            return HLT::OK;
+        }
     }
     // Didn't found any SV
     pointerToSecVtxCollections = 0;
-    return HLT::ErrorCode(HLT::Action::ABORT_CHAIN,HLT::Reason::MISSING_FEATURE);
+    ATH_MSG_DEBUG("Not found any Secondary Vertex valid collection!");
+    return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
+    //return HLT::ErrorCode(HLT::Action::ABORT_CHAIN,HLT::Reason::MISSING_FEATURE);
 }
 
 
@@ -300,14 +303,14 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
 {
     if(!pvselected)
     {
-	ATH_MSG_DEBUG("No primary vertex collection sent when extracting sec vtx info");
-	return HLT::OK;
+        ATH_MSG_DEBUG("No primary vertex collection sent when extracting sec vtx info");
+        return HLT::OK;
     }
 
     if(!pointerToEFSecVtxCollections) 
     {
-	ATH_MSG_DEBUG("No secondary vertex collection sent when extracting sec vtx info");
-    	return HLT::OK; // FIXME I need this, so you should stop the FEX
+        ATH_MSG_DEBUG("No secondary vertex collection sent when extracting sec vtx info");
+        return HLT::OK; // FIXME I need this, so you should stop the FEX
     }
   
     const Trk::VxSecVertexInfo* m_secVertexInfo = (*pointerToEFSecVtxCollections)[0];
@@ -321,15 +324,15 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
  
     if(!myVKalSecVertexInfo) 
     {
-	ATH_MSG_DEBUG("The cast to VKal secondary vertex went wrong, the pointer is zero");
-    	return HLT::OK;
+        ATH_MSG_DEBUG("The cast to VKal secondary vertex went wrong, the pointer is zero");
+        return HLT::OK;
     }
   
     const std::vector<xAOD::Vertex*> & myVertices = myVKalSecVertexInfo->vertices();
    
     if(myVertices.size() == 0)
     {
-	return HLT::OK;
+        return HLT::OK;
     }
  
     m_trigBjetSecVtxInfo->setVtxMass(myVKalSecVertexInfo->mass());
@@ -358,23 +361,23 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
         // Check we have vxTrackAtVertex
         std::vector<Trk::VxTrackAtVertex> * myTracks = 0;
         if( vertexIt->vxTrackAtVertexAvailable() )
-	{
-	    myTracks = &(vertexIt->vxTrackAtVertex());
-	    NTracksInSV+=myTracks->size();
-	}
+        {
+            myTracks = &(vertexIt->vxTrackAtVertex());
+            NTracksInSV+=myTracks->size();
+        }
         else
         {
-    	    ATH_MSG_WARNING("TrackAtVertex object not available! Setting 0 tracks attached to this vertex");
+            ATH_MSG_WARNING("TrackAtVertex object not available! Setting 0 tracks attached to this vertex");
         }
     }
     m_trigBjetSecVtxInfo->setNTrksInVtx(NTracksInSV);
-  
+    
     //Calculate decay length and significance here
-    //Use the same utilities as in InDetVKalVxInJet
-    // Note that this never happend because the pvselected should be filled at least at 000
+    ///Use the same utilities as in InDetVKalVxInJet
+    //Note that this never happend because the pvselected should be filled at least at 000
     if(!pvselected) 
     {
-	ATH_MSG_ERROR("Not filled properly the Primary Vertex (needed at least one default at (0,0,0)");
+        ATH_MSG_ERROR("Not filled properly the Primary Vertex (needed at least one default at (0,0,0)");
         return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::UNKNOWN);
     }
   
@@ -399,13 +402,13 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
     if(msgLvl() <= MSG::DEBUG) 
     {
         double dist2D = (SecVrt - pvselected->position()).perp();            
-	ATH_MSG_DEBUG("Calculating secondary vertex decay length with primary vertex at (" 
-  		<< pvselected->position().x()/CLHEP::mm << "," << pvselected->position().y()/CLHEP::mm
-		<< "," << pvselected->position().z()/CLHEP::mm << ") and sec vtx at ("
-   		<< SecVrt.x()/CLHEP::mm << "," << SecVrt.y()/CLHEP::mm << "," << SecVrt.z()/CLHEP::mm 
-		<<  ") which gives 3D decay length " << distance/CLHEP::mm 
-		<< " and 2D(R/phi) decay length " 
-		<< dist2D/CLHEP::mm << " [all in mm]");
+	    ATH_MSG_DEBUG("Calculating secondary vertex decay length with primary vertex at (" 
+                << pvselected->position().x()/CLHEP::mm << "," << pvselected->position().y()/CLHEP::mm
+                << "," << pvselected->position().z()/CLHEP::mm << ") and sec vtx at ("
+                << SecVrt.x()/CLHEP::mm << "," << SecVrt.y()/CLHEP::mm << "," << SecVrt.z()/CLHEP::mm 
+                <<  ") which gives 3D decay length " << distance/CLHEP::mm 
+                << " and 2D(R/phi) decay length " 
+                << dist2D/CLHEP::mm << " [all in mm]");
     }
     return HLT::OK;
 }
@@ -454,32 +457,32 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     if(m_useEtaPhiTrackSel) 
     {
     	if(fabs(track->eta() - m_trigBjetJetInfo->etaRoI()) > 0.2) 
-	{
-       	    ATH_MSG_DEBUG("  track " << i+1 << " is not selected (eta matching)");
-      	    m_listCutApplied.push_back(CutListMonitor::RoIEtaMatching); 
-	    return false;
-    	}
-    	
-	if(fabs(m_taggerHelper->phiCorr(m_taggerHelper->phiCorr(track->phi()) - m_trigBjetJetInfo->phiRoI())) > 0.2) 
-	{
-      	    ATH_MSG_DEBUG( "  track " << i+1 << " is not selected (phi matching)");
-      	    m_listCutApplied.push_back(CutListMonitor::RoIPhiMatching); 
-	    return false;
-	}
+        {
+            ATH_MSG_DEBUG("  track " << i+1 << " is not selected (eta matching)");
+            m_listCutApplied.push_back(CutListMonitor::RoIEtaMatching); 
+            return false;
+        }
+        
+        if(fabs(m_taggerHelper->phiCorr(m_taggerHelper->phiCorr(track->phi()) - m_trigBjetJetInfo->phiRoI())) > 0.2) 
+        {
+            ATH_MSG_DEBUG( "  track " << i+1 << " is not selected (phi matching)");
+            m_listCutApplied.push_back(CutListMonitor::RoIPhiMatching); 
+            return false;
+        }
     }
 
     if(fabs(pT) < m_trkSelPt) 
     {
-	ATH_MSG_DEBUG("  track " << i+1 << " not selected (pT cut)");
-    	m_listCutApplied.push_back(CutListMonitor::PtCut); 
-	return false;
+        ATH_MSG_DEBUG("  track " << i+1 << " not selected (pT cut)");
+        m_listCutApplied.push_back(CutListMonitor::PtCut); 
+        return false;
     }
   
     if(fabs(d0) > m_trkSelD0) 
     {
-	ATH_MSG_DEBUG("  track " << i+1 << " not selected (d0 cut)");
-    	m_listCutApplied.push_back(CutListMonitor::D0Cut); 
-	return false;
+        ATH_MSG_DEBUG("  track " << i+1 << " not selected (d0 cut)");
+        m_listCutApplied.push_back(CutListMonitor::D0Cut); 
+        return false;
     }
 
     if(fabs(z0-zv)*TMath::Sin(theta) > m_trkSelZ0) 
@@ -498,23 +501,23 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
 
     if(nPixHits < m_trkSelPixHits) 
     { 
-	ATH_MSG_DEBUG("  track " << i+1 << " not selected (too few pixel hits)");
+    	ATH_MSG_DEBUG("  track " << i+1 << " not selected (too few pixel hits)");
     	m_listCutApplied.push_back(CutListMonitor::PixelHitsCut); 
-	return false;
+	    return false;
     }
    
     if(nSiHits < m_trkSelSiHits) 
     {
-	ATH_MSG_DEBUG("  track " << i+1 << " not selected (too few silicon hits)");
-	m_listCutApplied.push_back(CutListMonitor::SiHitsCut); 
-	return false;
+	    ATH_MSG_DEBUG("  track " << i+1 << " not selected (too few silicon hits)");
+	    m_listCutApplied.push_back(CutListMonitor::SiHitsCut); 
+	    return false;
     }
   
     if(TMath::Prob(track->chiSquared(), (int)nSiHits*3-5) <= m_trkSelChi2) 
     {
-	ATH_MSG_DEBUG("  track " << i+1 << " not selected (chi2 cut)");
-    	m_listCutApplied.push_back(CutListMonitor::Chi2Cut); 
-	return false;
+        ATH_MSG_DEBUG("  track " << i+1 << " not selected (chi2 cut)");
+        m_listCutApplied.push_back(CutListMonitor::Chi2Cut); 
+        return false;
     }
 
     ATH_MSG_DEBUG("    track " << i+1 << " is selected");
@@ -523,57 +526,58 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     // Monitoring stuff -------------------------------------------------
     if(m_mon_validation || m_mon_online)
     {
-	m_mon_trk_a0_sel.push_back(track->d0());
-	m_mon_trk_z0_sel.push_back(track->z0());
-	m_mon_trk_z0_sel_PV.push_back(track->z0()-m_trigBjetPrmVtxInfo->zPrmVtx());
+        m_mon_trk_a0_sel.push_back(track->d0());
+        m_mon_trk_z0_sel.push_back(track->z0());
+        m_mon_trk_z0_sel_PV.push_back(track->z0()-m_trigBjetPrmVtxInfo->zPrmVtx());
+        
+        // ez0
+	    const float errIP1D = Amg::error(track->definingParametersCovMatrix(),1);
+        // ed0
+	    const float errIP2D = Amg::error(track->definingParametersCovMatrix(),0);
+    	const float z0 = track->z0()-m_trigBjetPrmVtxInfo->zPrmVtx();
 
-	// ez0
-	const float errIP1D = Amg::error(track->definingParametersCovMatrix(),1);
-	// ed0
-	const float errIP2D = Amg::error(track->definingParametersCovMatrix(),0);
-	const float z0 = track->z0()-m_trigBjetPrmVtxInfo->zPrmVtx();
-
-	float phiJetObject = 0.0;
-	float etaJetObject = 0.0; 
-		
-	if(m_useJetDirection == 1) 
-	{
-	    // Using HLT Jet 
-	    phiJetObject = m_trigBjetJetInfo->phiJet();
-	    etaJetObject = m_trigBjetJetInfo->etaJet();
-	}
-	else if(m_useJetDirection == 2) 
-	{
-	    // Using HLT track-based jet
-	    phiJetObject = m_trigBjetJetInfo->phiTrkJet();
-	    etaJetObject = m_trigBjetJetInfo->etaTrkJet();
-    	} 
-	else if(m_useJetDirection == 3) 
-	{
-	    // Using the LvL1 jet RoI 
-	    phiJetObject = m_trigBjetJetInfo->phiRoI();
-      	    etaJetObject = m_trigBjetJetInfo->etaRoI();
-    	}
-	const float d0Sign = m_taggerHelper->signedD0(track->d0(), track->phi(), phiJetObject);
-	const float z0Sign = m_taggerHelper->signedZ0(z0, track->eta(), etaJetObject);
-  	const float sigmaBeamSpot = (m_trigBjetPrmVtxInfo->xBeamSpotWidth()+
-		m_trigBjetPrmVtxInfo->yBeamSpotWidth())/2.0;
-	float IP1D = 0.0;
-	float IP2D = 0.0;
-	if(fabs(errIP1D) > TOLERANCE)
-	{
-	    IP1D = z0Sign/sqrt(errIP1D*errIP1D);
-	}
-	if((fabs(errIP2D) > TOLERANCE) || sigmaBeamSpot)
-	{
-	    IP2D = d0Sign/sqrt(IP2D*errIP2D+sigmaBeamSpot*sigmaBeamSpot);
-	}
-	m_mon_trk_Sz0_sel.push_back(IP1D);
-	m_mon_trk_Sa0_sel.push_back(IP2D);
+        float phiJetObject = 0.0;
+        float etaJetObject = 0.0; 
+        
+        if(m_useJetDirection == 1) 
+        {
+            // Using HLT Jet 
+            phiJetObject = m_trigBjetJetInfo->phiJet();
+            etaJetObject = m_trigBjetJetInfo->etaJet();
+        }
+        else if(m_useJetDirection == 2) 
+        {
+            // Using HLT track-based jet
+            phiJetObject = m_trigBjetJetInfo->phiTrkJet();
+            etaJetObject = m_trigBjetJetInfo->etaTrkJet();
+        } 
+        else if(m_useJetDirection == 3) 
+        {
+            // Using the LvL1 jet RoI 
+	        phiJetObject = m_trigBjetJetInfo->phiRoI();
+            etaJetObject = m_trigBjetJetInfo->etaRoI();
+        }
+        const float d0Sign = m_taggerHelper->signedD0(track->d0(), track->phi(), phiJetObject);
+        const float z0Sign = m_taggerHelper->signedZ0(z0, track->eta(), etaJetObject);
+        const float sigmaBeamSpot = (m_trigBjetPrmVtxInfo->xBeamSpotWidth()+
+                m_trigBjetPrmVtxInfo->yBeamSpotWidth())/2.0;
+        float IP1D = 0.0;
+        float IP2D = 0.0;
+        if(fabs(errIP1D) > TOLERANCE)
+        {
+            IP1D = z0Sign/sqrt(errIP1D*errIP1D);
+        }
+        if((fabs(errIP2D) > TOLERANCE) || sigmaBeamSpot)
+        {
+            IP2D = d0Sign/sqrt(IP2D*errIP2D+sigmaBeamSpot*sigmaBeamSpot);
+        }
+        m_mon_trk_Sz0_sel.push_back(IP1D);
+        m_mon_trk_Sa0_sel.push_back(IP2D);
     }
-
+    
     return true;
 }
+
 //** ----------------------------------------------------------------------------------------------------------------- **//
 HLT::ErrorCode TrigDvFex::checkxAODJets(const HLT::TriggerElement* inputTE)
 {
@@ -609,18 +613,17 @@ HLT::ErrorCode TrigDvFex::checkxAODJets(const HLT::TriggerElement* inputTE)
     if(njets > 1)
     {
         ATH_MSG_DEBUG("Something is wrong, it should not be more than one jet");
-	return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::NAV_ERROR);
+	    return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::NAV_ERROR);
     }
   
     if(msgLvl() <= MSG::DEBUG)
     {
-	for(const xAOD::Jet* aJet : theJets) 
-    	{ 
-	    static int i=0;   
-    	    ATH_MSG_DEBUG("  ["<<i<<"-Jet]: Et=" << aJet->p4().Et() << "(GeV), Eta=" << aJet->p4().Eta());
-    	}
+        for(const xAOD::Jet* aJet : theJets) 
+        { 
+            static int i=0;   
+            ATH_MSG_DEBUG("  ["<<i<<"-Jet]: Et=" << aJet->p4().Et() << "(GeV), Eta=" << aJet->p4().Eta());
+        }
     }
-
     return HLT::OK;
 }
  
@@ -634,6 +637,16 @@ HLT::ErrorCode TrigDvFex::checkxAODJets(const HLT::TriggerElement* inputTE)
 // just use outputTE, which is safer (although inputTE is slightly faster, marginaly in fact)
 HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::TriggerElement* outputTE) 
 {
+    // --> FIXME
+    // WORKFLOW: 
+    //          1. Extract ROI
+    //          2. Extract Secondary Vertices from algorithm
+    //               |--- InDet::TrigVxSecondaryCombo/TrigVxSecondaryCombo_Bjet_EF  (Package: InDetTrigVxSecondary) 
+    //             being the inputs TE 'HLT_j55_eta_jsplit_EFID' and 'HLT_super_EFID_prmVtxCombo' and the output
+    //             [HLT_j55_eta_jsplit_EFID__superVtx]   
+    //             Need to know the Secondary vertices input, etc.. (I know there is also a secondary vertex info)
+    //          3. NO NEED From PV, either Tracks, either anything else!!!
+    //
     ATH_MSG_DEBUG("Executing TrigDvFex");
 
     // Clear and initialize data members
@@ -653,7 +666,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     const TrigRoiDescriptor* roiDescriptor = 0;
     if(getFeature(inputTE, roiDescriptor, m_jetKey) != HLT::OK) 
     {
-	ATH_MSG_DEBUG("No feature for this Trigger Element");    	
+        ATH_MSG_DEBUG("No feature for this Trigger Element");    	
     	return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
     }
     ATH_MSG_DEBUG("Using TE: " << "RoI id " << roiDescriptor->roiId()
@@ -667,37 +680,37 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     float m_et_EFjet = 0;
     if(m_instance == "EF") 
     {
-	std::vector<const TrigOperationalInfo*> m_vectorOperationalInfo;
-    	if(getFeatures(inputTE, m_vectorOperationalInfo, "EFJetInfo") != HLT::OK) 
-	{
-	    ATH_MSG_WARNING("Failed to get TrigOperationalInfo");
-	    return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
-      	}
-	else 
-    	{
-    	    ATH_MSG_DEBUG("Number of TrigOperationalInfo objects: " << m_vectorOperationalInfo.size());
-    	}
+        std::vector<const TrigOperationalInfo*> m_vectorOperationalInfo;
+        if(getFeatures(inputTE, m_vectorOperationalInfo, "EFJetInfo") != HLT::OK) 
+        {
+            ATH_MSG_WARNING("Failed to get TrigOperationalInfo");
+            return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
+        }
+        else 
+        {
+            ATH_MSG_DEBUG("Number of TrigOperationalInfo objects: " << m_vectorOperationalInfo.size());
+        }
 
-	// -----------------------------------
+        // -----------------------------------
         // Get operational info
         // -----------------------------------
         std::vector<const TrigOperationalInfo*>::const_iterator m_operationalInfo;
         for(m_operationalInfo=m_vectorOperationalInfo.begin(); 
     	    m_operationalInfo!=m_vectorOperationalInfo.end(); ++m_operationalInfo) 
         {
-	    if( (*m_operationalInfo)->defined("EFJetEt")==1 ) 
-    	    {
-    		unsigned int m_etSize = (*m_operationalInfo)->infos().first.size();
-		if(m_etSize!=1) 
-    		{
-     		    ATH_MSG_WARNING("More than one Et threshold associated to the same EF jet");
-    		    return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
-    		}
-    		m_et_EFjet = (*m_operationalInfo)->get("EFJetEt");
-	    }
+            if( (*m_operationalInfo)->defined("EFJetEt")==1 ) 
+            {
+                unsigned int m_etSize = (*m_operationalInfo)->infos().first.size();
+                if(m_etSize!=1) 
+                {
+                    ATH_MSG_WARNING("More than one Et threshold associated to the same EF jet");
+                    return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
+                }
+                m_et_EFjet = (*m_operationalInfo)->get("EFJetEt");
+            }
         }
     }
-  
+
     // Set properties of the EF-jet 
     m_trigBjetJetInfo->setEtaPhiJet(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
     m_trigBjetJetInfo->setEtaPhiRoI(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
@@ -708,7 +721,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     HLT::ErrorCode xaodc = checkxAODJets(inputTE);
     if( xaodc != HLT::OK )
     {
-	return xaodc;
+        return xaodc;
     }	
   
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -731,27 +744,27 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
      	Amg::Vector3D m_beamSpot = m_iBeamCondSvc->beamPos();
      	int m_beamSpotBitMap = m_iBeamCondSvc->beamStatus();
      	// Check if beam spot is from online algorithms
-	int m_beamSpotStatus = ((m_beamSpotBitMap & 0x4) == 0x4);
+        int m_beamSpotStatus = ((m_beamSpotBitMap & 0x4) == 0x4);
      	// Check if beam spot fit converged
-	if(m_beamSpotStatus)
-	{
-	    // and update
-	    m_beamSpotStatus = ((m_beamSpotBitMap & 0x3) == 0x3);
-	}
+	    if(m_beamSpotStatus)
+        {
+            // and update
+            m_beamSpotStatus = ((m_beamSpotBitMap & 0x3) == 0x3);
+        }
         ATH_MSG_DEBUG("Beam spot from service: x=" << m_beamSpot.x() 
-		<< ", y=" << m_beamSpot.y() << ", z=" << m_beamSpot.z() 
-    		<< ", tiltXZ=" << m_iBeamCondSvc->beamTilt(0) << ", tiltYZ=" 
-		<< m_iBeamCondSvc->beamTilt(1) << ", sigmaX=" 
-		<< m_iBeamCondSvc->beamSigma(0) << ", sigmaY=" 
-		<< m_iBeamCondSvc->beamSigma(1) << ", sigmaZ=" 
-		<< m_iBeamCondSvc->beamSigma(2) << ", status=" << m_beamSpotStatus);
-        
-	// Update Primary vertex info class with beam spot position, tilt and width
-	m_trigBjetPrmVtxInfo->setBeamSpot(m_beamSpot.x(), m_beamSpot.y(), m_beamSpot.z());
-       	m_trigBjetPrmVtxInfo->setBeamSpotTilt(m_iBeamCondSvc->beamTilt(0), m_iBeamCondSvc->beamTilt(1));
-    	m_trigBjetPrmVtxInfo->setBeamSpotWidth(m_iBeamCondSvc->beamSigma(0), 
-		m_iBeamCondSvc->beamSigma(1), m_iBeamCondSvc->beamSigma(2));
-    	m_trigBjetPrmVtxInfo->setBeamSpotStatus(m_beamSpotStatus);
+                << ", y=" << m_beamSpot.y() << ", z=" << m_beamSpot.z() 
+                << ", tiltXZ=" << m_iBeamCondSvc->beamTilt(0) << ", tiltYZ=" 
+                << m_iBeamCondSvc->beamTilt(1) << ", sigmaX=" 
+                << m_iBeamCondSvc->beamSigma(0) << ", sigmaY=" 
+                << m_iBeamCondSvc->beamSigma(1) << ", sigmaZ=" 
+                << m_iBeamCondSvc->beamSigma(2) << ", status=" << m_beamSpotStatus);
+	    
+        // Update Primary vertex info class with beam spot position, tilt and width
+        m_trigBjetPrmVtxInfo->setBeamSpot(m_beamSpot.x(), m_beamSpot.y(), m_beamSpot.z());
+        m_trigBjetPrmVtxInfo->setBeamSpotTilt(m_iBeamCondSvc->beamTilt(0), m_iBeamCondSvc->beamTilt(1));    
+        m_trigBjetPrmVtxInfo->setBeamSpotWidth(m_iBeamCondSvc->beamSigma(0), 
+                m_iBeamCondSvc->beamSigma(1), m_iBeamCondSvc->beamSigma(2));
+        m_trigBjetPrmVtxInfo->setBeamSpotStatus(m_beamSpotStatus);
 
         ATH_MSG_DEBUG(*m_trigBjetPrmVtxInfo);
     }
@@ -775,7 +788,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     if(status != HLT::OK) 
     {
      	ATH_MSG_DEBUG("No HLT track collection retrieved");
-	return status; // Should I return?
+        return status; // Should I return?
     } 
     ATH_MSG_DEBUG("HLT track collection retrieved");
     
@@ -785,8 +798,8 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     HLT::ErrorCode retSVstatus = getSecVtxCollection(pointerToEFSecVtxCollections, inputTE);
     if(retSVstatus != HLT::OK)
     {
-	ATH_MSG_DEBUG("No secondary vertex collection retrieved");
-	return retSVstatus;
+        ATH_MSG_DEBUG("No secondary vertex collection retrieved");
+        return retSVstatus;
     } 
     ATH_MSG_DEBUG("Secondary vertex collection retrieved");
   
@@ -797,22 +810,22 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     std::string vtxlabel;
     if(m_histoPrmVtxAtEF)     // PV from TrigT2HistoPrmVtx
     {
-	vtxlabel=m_priVtxKey;
+        vtxlabel=m_priVtxKey;
     }
     else                      // PV from ID tracking
     {
-	vtxlabel="";
+        vtxlabel="";
     }
     // retrieve the vtx collection
     HLT::ErrorCode retPVstatus = getPrmVtxCollection(pointerToEFPrmVtxCollections, inputTE,vtxlabel);
     if(retPVstatus != HLT::OK)
     {
-	ATH_MSG_DEBUG("No primary vertex collection retrieved");
-	//return retPVstatus;
+        ATH_MSG_DEBUG("No primary vertex collection retrieved");
+	    //return retPVstatus;
     }
     else
     {
-	ATH_MSG_DEBUG("Primary vertex collection retrieved");
+        ATH_MSG_DEBUG("Primary vertex collection retrieved");
     }
 
     // Aux var: PV with higher sum_{tracks} pt^2
@@ -820,94 +833,94 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     // Protect against null pointers
     if(pointerToEFPrmVtxCollections) 
     {
-	// Protect against empty vectors
-	if(pointerToEFPrmVtxCollections->size()==1) 
-	{
-	    pvselected = ((*pointerToEFPrmVtxCollections)[0]);
-	}
-	else if(pointerToEFPrmVtxCollections->size() > 1)
-	{
-	    // Aux map to order
-	    std::map<float,const xAOD::Vertex *> auxPVOrder;
-	    // Get as PV, the one with higher sum pt^2 of the tracks
-	    for(const xAOD::Vertex * prmVertex : *pointerToEFPrmVtxCollections)
+        // Protect against empty vectors
+	    if(pointerToEFPrmVtxCollections->size()==1) 
 	    {
-		const size_t ntracks = prmVertex->nTrackParticles(); 
-		float sumpt2 = 0.0;
-		for( size_t i = 0; i < ntracks; ++i)
-		{
-		    const double trackpt= prmVertex->trackParticle(i)->pt();
-		    sumpt2 += (trackpt*trackpt);
-		}
-		auxPVOrder[sumpt2] = prmVertex;
-	    }
-	    // Higher sum_{tracks} pt^2
-	    pvselected = auxPVOrder.rbegin()->second;
-	}
-	else
-	{
-    	    ATH_MSG_DEBUG("Empty primary vertex collection retrieved");       
-	}
+            pvselected = ((*pointerToEFPrmVtxCollections)[0]);
+        }
+	    else if(pointerToEFPrmVtxCollections->size() > 1)
+        {
+            // Aux map to order
+	        std::map<float,const xAOD::Vertex *> auxPVOrder;
+	        // Get as PV, the one with higher sum pt^2 of the tracks
+	        for(const xAOD::Vertex * prmVertex : *pointerToEFPrmVtxCollections)
+            {
+                const size_t ntracks = prmVertex->nTrackParticles(); 
+                float sumpt2 = 0.0;
+		        for( size_t i = 0; i < ntracks; ++i)
+                {
+                    const double trackpt= prmVertex->trackParticle(i)->pt();
+                    sumpt2 += (trackpt*trackpt);
+                }
+                auxPVOrder[sumpt2] = prmVertex;
+            }
+            // Higher sum_{tracks} pt^2
+            pvselected = auxPVOrder.rbegin()->second;
+        }
+        else
+        {
+            ATH_MSG_DEBUG("Empty primary vertex collection retrieved");       
+        }
     }
     else   
     {
-	ATH_MSG_DEBUG("No primary vertex collection retrieved");
+        ATH_MSG_DEBUG("No primary vertex collection retrieved");
     }
-
+    
     if(pvselected)
     {
-	m_zPrmVtx = pvselected->z();
-	if(!m_histoPrmVtxAtEF)
-	{
-	    m_xPrmVtx = (float)(pvselected->x());
-	    m_yPrmVtx = (float)(pvselected->y());
-	}
+        m_zPrmVtx = pvselected->z();
+        if(!m_histoPrmVtxAtEF)
+        {
+            m_xPrmVtx = (float)(pvselected->x());
+            m_yPrmVtx = (float)(pvselected->y());
+        }
     }
     
     // -----------------------------------
     // Apply beam spot correction for tilt
     // ----------------------------------- 
     float m_xBeamSpot = m_trigBjetPrmVtxInfo->xBeamSpot() + 
-	tan(m_trigBjetPrmVtxInfo->xBeamSpotTilt()) * (m_zPrmVtx-m_trigBjetPrmVtxInfo->zBeamSpot());
-  
+        tan(m_trigBjetPrmVtxInfo->xBeamSpotTilt()) * (m_zPrmVtx-m_trigBjetPrmVtxInfo->zBeamSpot());
+    
     float m_yBeamSpot = m_trigBjetPrmVtxInfo->yBeamSpot() + 
-	tan(m_trigBjetPrmVtxInfo->yBeamSpotTilt()) * (m_zPrmVtx-m_trigBjetPrmVtxInfo->zBeamSpot());
-  
+        tan(m_trigBjetPrmVtxInfo->yBeamSpotTilt()) * (m_zPrmVtx-m_trigBjetPrmVtxInfo->zBeamSpot());
+    
     float m_zBeamSpot = m_trigBjetPrmVtxInfo->zBeamSpot();
-
+    
     m_trigBjetPrmVtxInfo->setBeamSpot(m_xBeamSpot, m_yBeamSpot, m_zBeamSpot);  // Redundant?
     m_trigBjetPrmVtxInfo->setPrmVtx(m_xPrmVtx, m_yPrmVtx, m_zPrmVtx);
-  
+    
     ATH_MSG_DEBUG(*m_trigBjetPrmVtxInfo);
-  
+    
     m_trackJetFinderTool->clear();
     ATH_MSG_DEBUG("Set input  z-vtx to trackjet tool " << m_trigBjetPrmVtxInfo->zPrmVtx());
     m_trackJetFinderTool->inputPrimaryVertexZ(m_trigBjetPrmVtxInfo->zPrmVtx());
     ATH_MSG_DEBUG("Done set input  z-vtx to trackjet tool " << m_trigBjetPrmVtxInfo->zPrmVtx());
-
+    
     // Get number of reconstructed tracks in this RoI
     m_totTracks = m_taggerHelper->getTrackNumber(pointerToEFTrackCollections);
     for(unsigned int j = 0; j < m_totTracks; ++j) 
     {
-	const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
-	if(m_mon_validation)
-	{
-    	    m_mon_trk_a0.push_back(track->d0());
-    	    m_mon_trk_z0.push_back(track->z0());
-	}
-     	
-      	if(efTrackSel(track, j)) 
-	{
-       	    m_totSelTracks++;
-      	    TrigBjetTrackInfo trigBjetTrackInfo(track);
-      	    
-	    float d0Corr=0, z0Corr=0;
-	    d0Corr=track->d0(); 
-      	    z0Corr=track->z0();
-      	    trigBjetTrackInfo.setIPCorr(d0Corr, z0Corr);
-	    ATH_MSG_DEBUG("  " << trigBjetTrackInfo);
-      	    trigBjetTrackInfoVector.push_back(trigBjetTrackInfo);
-      	    //m_trackJetFinderTool->addTrack(track, j);
+        const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
+        if(m_mon_validation)
+        {
+            m_mon_trk_a0.push_back(track->d0());
+            m_mon_trk_z0.push_back(track->z0());
+        }
+        
+        if(efTrackSel(track, j)) 
+        {
+            m_totSelTracks++;
+            TrigBjetTrackInfo trigBjetTrackInfo(track);
+            
+            float d0Corr=0, z0Corr=0;
+            d0Corr=track->d0(); 
+            z0Corr=track->z0();
+            trigBjetTrackInfo.setIPCorr(d0Corr, z0Corr);
+            ATH_MSG_DEBUG("  " << trigBjetTrackInfo);
+            trigBjetTrackInfoVector.push_back(trigBjetTrackInfo);
+            //m_trackJetFinderTool->addTrack(track, j);
       	}
     }
     
@@ -944,44 +957,44 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     {
       	const EventInfo* pEventInfo = 0;
      	if( !store() || store()->retrieve(pEventInfo).isFailure() ) 
-	{
-	    ATH_MSG_DEBUG("Failed to get EventInfo ");
-	} 
-      	else 
-	{
-	    ATH_MSG_DEBUG("Bjet slice summary (Run " << pEventInfo->event_ID()->run_number() 
-		    << "; Event " << pEventInfo->event_ID()->event_number() << ")");
-      	    ATH_MSG_DEBUG("REGTEST:  RoI " << roiDescriptor->roiId() << ", Phi = "   
-		    << roiDescriptor->phi() << ", Eta = "   << roiDescriptor->eta());
-       	    ATH_MSG_DEBUG("REGTEST:  Tracks: " << m_totTracks << " reconstructed and " 
-		    << m_totSelTracks <<" selected");
-	
-	    if(pointerToEFPrmVtxCollections) 
-	    {
-		ATH_MSG_DEBUG("REGTEST:  Primary vertex: " 
-			<< pointerToEFPrmVtxCollections->size() << " reconstructed"
-		       	<< ", (x,y,z) = (" << m_trigBjetPrmVtxInfo->xPrmVtx() << "," 
-			<< m_trigBjetPrmVtxInfo->yPrmVtx() << "," 
-			<< m_trigBjetPrmVtxInfo->zPrmVtx() << ")");
-      	    }
-       	    if(pointerToEFSecVtxCollections)
-	    {
-		ATH_MSG_DEBUG("REGTEST:  Secondary vertex: " 
-			<< pointerToEFSecVtxCollections->size() << " reconstructed");
-	    }
-	    else
-	    {
-		ATH_MSG_DEBUG("REGTEST:  Secondary vertex: 0 reconstructed");
-	    }
-    	    ATH_MSG_DEBUG("REGTEST:  SV Decay Length: " 
-		    <<  m_trigBjetSecVtxInfo->decayLengthSignificance()/CLHEP::mm << " mm, SV mass: " 
-		    <<  m_trigBjetSecVtxInfo->vtxMass()/CLHEP::GeV << " GeV, SV efrac: " 
-		    <<  m_trigBjetSecVtxInfo->energyFraction()/CLHEP::GeV
-		    << " GeV, SV 2-track vertex multiplicity " << m_trigBjetSecVtxInfo->n2TrkVtx());
-            ATH_MSG_DEBUG("REGTEST: List weights stored probability and likelihood objects:");
-	}
-    }
+        {
+            ATH_MSG_DEBUG("Failed to get EventInfo ");
+        } 
+        else 
+        {
+            ATH_MSG_DEBUG("DV summary (Run " << pEventInfo->event_ID()->run_number() 
+                    << "; Event " << pEventInfo->event_ID()->event_number() << ")");
+            ATH_MSG_DEBUG("REGTEST:  RoI " << roiDescriptor->roiId() << ", Phi = "   
+                    << roiDescriptor->phi() << ", Eta = "   << roiDescriptor->eta());
+            ATH_MSG_DEBUG("REGTEST:  Tracks: " << m_totTracks << " reconstructed and " 
+                    << m_totSelTracks <<" selected");
 
+            if(pointerToEFPrmVtxCollections) 
+            {
+                ATH_MSG_DEBUG("REGTEST:  Primary vertex: " 
+                        << pointerToEFPrmVtxCollections->size() << " reconstructed"
+                        << ", (x,y,z) = (" << m_trigBjetPrmVtxInfo->xPrmVtx() << "," 
+                        << m_trigBjetPrmVtxInfo->yPrmVtx() << "," 
+                        << m_trigBjetPrmVtxInfo->zPrmVtx() << ")");
+            }
+            if(pointerToEFSecVtxCollections)
+            {
+                ATH_MSG_DEBUG("REGTEST:  Secondary vertex: " 
+                        << pointerToEFSecVtxCollections->size() << " reconstructed");
+            }
+            else	    
+            {
+                ATH_MSG_DEBUG("REGTEST:  Secondary vertex: 0 reconstructed");
+            }
+            ATH_MSG_DEBUG("REGTEST:  SV Decay Length: " 
+                    <<  m_trigBjetSecVtxInfo->decayLengthSignificance()/CLHEP::mm << " mm, SV mass: " 
+                    <<  m_trigBjetSecVtxInfo->vtxMass()/CLHEP::GeV << " GeV, SV efrac: " 
+                    <<  m_trigBjetSecVtxInfo->energyFraction()/CLHEP::GeV
+                    << " GeV, SV 2-track vertex multiplicity " << m_trigBjetSecVtxInfo->n2TrkVtx());
+            ATH_MSG_DEBUG("REGTEST: List weights stored probability and likelihood objects:");
+        }
+    }
+    
     // Attach a Primary Vertex and Secondary Vertex ... that'all we need
     // -----------------------------------
     // -----------------------------------
@@ -1001,15 +1014,15 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     
     if(!m_trigEFBjetColl) 
     {
-	ATH_MSG_ERROR("Feature TrigEFBjetContainer not found");
+    	ATH_MSG_ERROR("Feature TrigEFBjetContainer not found");
        	return HLT::ErrorCode(HLT::Action::ABORT_JOB, HLT::Reason::BAD_JOB_SETUP);
     }
     
     HLT::ErrorCode stat = attachFeature(outputTE, m_trigEFBjetColl, "EFBjetDvFex");
     if(stat != HLT::OK) 
     {
-	ATH_MSG_DEBUG("Failed to attach TrigEFBjetContainer to navigation");
-	return stat;
+	    ATH_MSG_DEBUG("Failed to attach TrigEFBjetContainer to navigation");
+	    return stat;
     }
 
     return HLT::OK;
