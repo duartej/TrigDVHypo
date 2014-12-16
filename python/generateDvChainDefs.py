@@ -67,15 +67,37 @@ def generateChainDefs(__chainDict):
     #----------------------------------------------------------------------------
 
     #----------------------------------------------------------------------------
-    # --- obtain jet chain def used as inputTE for first btag sequence ---
+    # --- obtain jet chain def used as inputTE for first   sequence ---
     # ----> This can be substitute depending the input TE RoI (muon,egamma)
+    from TriggerMenu.jet.generateJetChainDefs import generateChainDefs as genJetChainDefs
+    thejThrChainDef = get_j35_ChainDef()
+    theBJChainDef =  genJetChainDefs(thejThrChainDef)
+    logDvDef.debug("ChainDef for dv-jet chain: \n %s" % (str(theBJChainDef)))
+    ##----------------------------------------------------------------------------
+    # ----> the proper chain
     primaryobjectchainname = jetchainDict['chainName'].replace('dv_','').replace('TestChain','j')
     # -- new dictionary for pure jet (muon,egamma) object trigger
     pochaindict = deepcopy(chainDict)
     pochaindict['chainName'] = primaryobjectchainname
-    from TriggerMenu.jet.generateJetChainDefs import generateChainDefs as genJetChainDefs
-    theJetChainDef =  genJetChainDefs(pochaindict)
-    logDvDef.debug("ChainDef for dv-jet chain: \n %s" % (str(theJetChainDef)))
+    theAllJetChainDef =  genJetChainDefs(pochaindict)
+    logDvDef.debug("Jet Chaindef for dv-jet chain: \n %s" % (str(theAllJetChainDef)))
+    ##----------------------------------------------------------------------------
+
+    ##----------------------------------------------------------------------------
+    ## --- now merge chain defs so that last TE is from jet serving as input to SV seq ---
+    ## DO NOT CHANGE THE MERGING ORDER PLEASE, OTHERWISE WRONG INPUTTE IS SELECTED
+    theJetChainDef = mergeChainDefs([theAllJetChainDef, theBJChainDef], 'serial', -1, False)
+    logDvDef.debug("Merged chainDef for dv-jet chain: \n %s" % (str(theJetChainDef)))
+    ##----------------------------------------------------------------------------
+
+    ##----------------------------------------------------------------------------
+    ## --- filtering b-tagged jets chainParts ---
+    #listofChainDicts = splitChainDict(chainDict_orig)
+    #logDvDef.debug("Split dv-jet chainDict: \n %s" % (pp.pformat(listofChainDicts)))
+    
+    
+    #theJetChainDef =  genJetChainDefs(pochaindict)
+    #logDvDef.debug("ChainDef for dv-jet chain: \n %s" % (str(theJetChainDef)))
 
     # --------------------------------------------------------------------------
     # --- adding to the jet (muon/egamma) sequence, the dv-relateda
@@ -338,8 +360,8 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     jetHypoTE = "HLT_j"+btagthresh+"_eta"    #  Jets eta/pt cut
     jetSplitTE = jetHypoTE+"_jsplit"         #  Jets splitted in several TE
     jetTrackTE = jetSplitTE+"_"+tracking     #  Jets reconstructed at HLT
-    superTE = "HLT_super_"+btagthresh        #  One SuperRoI only
-    superTrackingTE = superTE+"_"+tracking       #  Tracking in the SuperRoI
+    superTE = "HLT_super"                    #  One SuperRoI only
+    superTrackingTE = superTE+"_"+tracking   #  Tracking in the SuperRoI
     prmVertexTE = superTrackingTE+"_prmVtx"  #  PrmVtx obtained with the SuperRoI tracking
     comboPrmVtxTE = prmVertexTE+"Combo"      #  PrmVtx as above, but using other algo
     secVtxTE = jetTrackTE+"__"+"superVtx"    #  Secondary Vertices
@@ -577,7 +599,7 @@ def get_j35_ChainDef():
                                         'topo': [], 
                                         'trigType': 'j'}, ], 
                       'groups': ['RATE:MultiJet', 'BW:Jets'], 
-                      'signature': 'Jet', 
+                      'signature':'Jet', 
                       'signatures': '', 
                       'stream': ['Jet'], 
                       'topo': []} 
