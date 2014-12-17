@@ -332,6 +332,12 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
    
     if(myVertices.size() == 0)
     {
+        ATH_MSG_DEBUG("The vertices size associated to the myVKalSecVertexInfo is 0!" 
+                << " Content of the myVKalSecVertexInfo " << std::endl 
+                << "   - mass: " << myVKalSecVertexInfo->mass()/CLHEP::GeV << " [GeV] " << std::endl
+                << "   - energyFraction: " << myVKalSecVertexInfo->energyFraction() << " " << std::endl
+                << "   - energyTrkInJet: " << myVKalSecVertexInfo->energyTrkInJet() << " " << std::endl
+                << "   - number of 2Tracks-vertices: " << myVKalSecVertexInfo->n2trackvertices() );
         return HLT::OK;
     }
  
@@ -788,7 +794,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     if(status != HLT::OK) 
     {
      	ATH_MSG_DEBUG("No HLT track collection retrieved");
-        return status; // Should I return?
+        return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE); // Should I return?
     } 
     ATH_MSG_DEBUG("HLT track collection retrieved");
     
