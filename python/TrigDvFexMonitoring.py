@@ -4,8 +4,24 @@ class TrigDvFexMonitoring(TrigGenericMonitoringToolConfig):
     def __init__ (self, name="TrigDvFexMonitoring"):
         super(TrigDvFexMonitoring, self).__init__(name)
 
+        # Secondary vertices
+        self.Histograms += [ defineHistogram('sv_m', type='TH1F',
+            title='invariant mass of the secondary vertex candidate;M_{DV} [GeV];Entries', \
+                    xbins=200,xmin=0,xmax=500) ]
+        self.Histograms += [ defineHistogram('sv_rdv', type='TH1F',        
+            title='secondary vertex radial distance from the primary vertex;r_{DV} [mm];Entries', \
+                    xbins=200,xmin=-500,xmax=500 ]
+        self.Histograms += [ defineHistogram('sv_Ldv', type='TH1F',        
+            title='secondary vertex 2d-distance (in R-Phi plane) from the primary vertex;'+\
+                    'L_{DV} [mm];Entries',xbins=200,xmin=-500,xmax=500 ]
+        self.Histograms += [ defineHistogram('sv_ntrk', type='TH1F',        
+            title='secondary vertex track multiplicity;N_{trk};Entries',xbins=51,xmin=0,xmax=50 ]
+        self.Histograms += [ defineHistogram('sv_fre', type='TH1F',        
+            title='secondary vertex energy fraction between ... ;;Entries',xbins=100,xmin=0,xmax=1 ]
+
+        # Tracks
         self.Histograms += [ defineHistogram('trk_a0_sel', type='TH1F', 
-                title="transverse IP for selected tracks",xbins=200, xmin=-300, xmax=300) ]
+            title="transverse IP for selected tracks",xbins=200, xmin=-300, xmax=300) ]
         self.Histograms += [ defineHistogram('trk_S(a0)_sel', type='TH1F', 
                 title="transverse IP significance for selected tracks",xbins=400, xmin=-20.0, xmax=20.0) ]
 

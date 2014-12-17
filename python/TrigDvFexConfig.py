@@ -23,7 +23,7 @@ class DvFex(TrigDvFex):
             return None
         
         self.JetKey = "SplitJet"
-        self.PriVtxKey = "EFHistoPrmVtx"
+        self.PriVtxKey = "T2PrimaryVertex" #"EFHistoPrmVtx"
         
         self.AlgoId = -1
     

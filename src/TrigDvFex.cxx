@@ -11,29 +11,18 @@
 // Eigen library (Amg::error)
 #include "EventPrimitives/EventPrimitivesHelpers.h"
 
-//#include "TrigInDetEvent/TrigInDetTrackCollection.h"
 #include "Particle/TrackParticleContainer.h"
-//#include "TrigInDetEvent/TrigVertexCollection.h"
 #include "VxSecVertex/VxSecVertexInfo.h"
 #include "VxSecVertex/VxSecVKalVertexInfo.h"
-//#include "TrigCaloEvent/TrigT2Jet.h"
 #include "TrigSteeringEvent/TrigRoiDescriptor.h"
 #include "EventInfo/EventInfo.h"
 #include "EventInfo/EventID.h"
-//#include "EventPrimitives/EventPrimitives.h"
-//#include "EventPrimitives/EventPrimitivesHelpers.h"
 
 #include "TrigParticle/TrigEFBjetContainer.h"
 
 #include "TrigSteeringEvent/TrigOperationalInfo.h"
 
 #include "InDetBeamSpotService/IBeamCondSvc.h"
-
-//#include "TrigInDetEvent/TrigVertex.h"
-
-//#include "xAODBTagging/BTaggingContainer.h"
-//#include "xAODBTagging/BTagging.h"
-//#include "xAODBTagging/BTaggingAuxContainer.h"
 
 #include "xAODJet/Jet.h"
 #include "xAODJet/JetContainer.h"
@@ -199,8 +188,6 @@ HLT::ErrorCode TrigDvFex::getTrackCollection(const xAOD::TrackParticleContainer*
 }
 
 //** ----------------------------------------------------------------------------------------------------------------- **//
-
-
 HLT::ErrorCode TrigDvFex::getPrmVtxCollection(const xAOD::VertexContainer*& pointerToEFPrmVtxCollections, 
 	const HLT::TriggerElement* whateverTE, const std::string & vtxkey, const bool & ispvfromsvalg) 
 {
@@ -303,7 +290,6 @@ HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContaine
 
 
 //** ----------------------------------------------------------------------------------------------------------------- **//
-
 // This method should use a new data-member called m_svcollection, in order to be sure we properly
 // set this collection in the getSecVtx or maybe this method should be absorbed in the getSecVtxCollection
 // method?? This will avoid a lot of cross-checsk and ifs...
@@ -941,7 +927,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
 	    0, 0, 0, m_trigBjetPrmVtxInfo->zPrmVtx(), m_trigBjetJetInfo->etJet(),
 	    -1,-1,-1, -1,-1,  // Note, i can use this to fill other stuff if I need 
 	    m_trigBjetSecVtxInfo->decayLengthSignificance(), m_trigBjetSecVtxInfo->vtxMass(), 
-	    m_trigBjetSecVtxInfo->energyFraction(), m_trigBjetSecVtxInfo->n2TrkVtx()); 
+	    m_trigBjetSecVtxInfo->energyFraction(), m_trigBjetSecVtxInfo->nTrksInVtx()); 
     
     trigEFBjet->validate(true);
     m_trigEFBjetColl->push_back(trigEFBjet);
