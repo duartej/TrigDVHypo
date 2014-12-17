@@ -241,8 +241,6 @@ HLT::ErrorCode TrigDvFex::getPrmVtxCollection(const xAOD::VertexContainer*& poin
 
 
 //** ----------------------------------------------------------------------------------------------------------------- **//
-
-
 HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContainer*& pointerToSecVtxCollections,
        	const HLT::TriggerElement* whateverTE) 
 {
@@ -255,41 +253,39 @@ HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContaine
        return status;
     }
     ATH_MSG_DEBUG("Got " << vectorOfSecVtxCollections.size() << " VxSecVertexInfoContainer");
-  
-    std::vector<const Trk::VxSecVertexInfoContainer*>::iterator pSecVtxColl    = vectorOfSecVtxCollections.begin();
-    std::vector<const Trk::VxSecVertexInfoContainer*>::iterator lastSecVtxColl = vectorOfSecVtxCollections.end();
-  
-    // JDC:: What's the logic? A vector of vectors of sec. vtx. 
-    for( ; pSecVtxColl != lastSecVtxColl; ++pSecVtxColl)
-    {
-	    if((*pSecVtxColl)->size() == 0)
-        {   
-            continue;
-        }
-        const std::vector<xAOD::Vertex*> vectorOfVxCandidates = (*pSecVtxColl)->front()->vertices();
     
-        if(vectorOfVxCandidates.size() == 0)
+    if( vectorOfSecVtxCollections.size() > 1 )
+    {
+        ATH_MSG_ERROR("The VxSecVertexInfoContainer have more than 1 element!");
+        return HLT::ErrorCode(HLT::Action::ABORT_CHAIN,HLT::Reason::NAV_ERROR);
+    }
+
+    const Trk::VxSecVertexInfoContainer * vectorOfSvInfo = vectorOfSecVtxCollections[0];
+    // Check if each VxSecVertexInfo contains a valid set of vertices, note that
+    // Trk::VxSecVertexInfo is a base class with no useful methods except of the 
+    // vertices one
+    for( auto & svinfo : *vectorOfSvInfo)
+    {
+        const std::vector<xAOD::Vertex*> vectorOfSv = svinfo->vertices();
+        if( vectorOfSv.size() == 0 )
         {
             continue;
         }
-        
-        ATH_MSG_VERBOSE("VxSecVertexInfoContainer with label type " << 
-                (*vectorOfVxCandidates.begin())->vertexType());
-        
-        if((*vectorOfVxCandidates.begin())->vertexType() == 2) 
+        // This check is probably redundant, but nevertheless...
+        if( vectorOfSv[0]->vertexType() == xAOD::VxType::VertexType::SecVtx)
         {
-            ATH_MSG_DEBUG("Selected collection with Secondary Vertex label"); 
-            ATH_MSG_DEBUG("First SV has z-position = " << (*vectorOfVxCandidates.begin())->z());
-            // Just need the first one? I'm assuming the previous alg, put all the SV in the same set
-            pointerToSecVtxCollections = *pSecVtxColl;
+            //So, the vectorOfSvInfo contains at least one collection 
+            // of Secondary Vertices... storing and return
+            ATH_MSG_DEBUG("Selected vertex-collection with Secondary Vertex label"); 
+            ATH_MSG_DEBUG("The first SV has z-position = " << vectorOfSv[0]->z());
+            pointerToSecVtxCollections = vectorOfSvInfo;
             return HLT::OK;
         }
     }
-    // Didn't found any SV
+    // Didn't found any valid secondary vertex collection, the chain should abort?
     pointerToSecVtxCollections = 0;
     ATH_MSG_DEBUG("Not found any Secondary Vertex valid collection!");
     return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
-    //return HLT::ErrorCode(HLT::Action::ABORT_CHAIN,HLT::Reason::MISSING_FEATURE);
 }
 
 
@@ -301,6 +297,8 @@ HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContaine
 HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& pointerToEFSecVtxCollections, 
 					  const xAOD::Vertex* & pvselected) 
 {
+    // Extraer el primary vertex construido por el SV
+    // "T2PrimaryVertex"
     if(!pvselected)
     {
         ATH_MSG_DEBUG("No primary vertex collection sent when extracting sec vtx info");
@@ -309,6 +307,7 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
 
     if(!pointerToEFSecVtxCollections) 
     {
+        // SHouldn't be here
         ATH_MSG_DEBUG("No secondary vertex collection sent when extracting sec vtx info");
         return HLT::OK; // FIXME I need this, so you should stop the FEX
     }
@@ -349,7 +348,9 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
     
     if(myVertices.size()>1) 
     {
-        ATH_MSG_WARNING("Secondary vertex from InDetVKalVxInJet has more than one vertex, is this ok?");
+        ATH_MSG_WARNING("Secondary vertex from InDetVKalVxInJet has more than one vertex,"
+                << " they have been merged into just one (mass, energies, etc.. ) are stored"
+                << " belonging to a just one vertex");
     }
     
     for(xAOD::Vertex * vertexIt : myVertices) 
@@ -380,13 +381,6 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
     
     //Calculate decay length and significance here
     ///Use the same utilities as in InDetVKalVxInJet
-    //Note that this never happend because the pvselected should be filled at least at 000
-    if(!pvselected) 
-    {
-        ATH_MSG_ERROR("Not filled properly the Primary Vertex (needed at least one default at (0,0,0)");
-        return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::UNKNOWN);
-    }
-  
     ATH_MSG_DEBUG("Primary vertex for decay length (" 
     	<< pvselected->position().x() << "," 
     	<< pvselected->position().y() << "," 
@@ -394,11 +388,26 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
     	<< pvselected->covariancePosition()(0,0) << "," 
     	<< pvselected->covariancePosition()(1,1) << "," 
     	<< pvselected->covariancePosition()(2,2) << ")");
-    
+    // Primary Vertex used with the SV build algorithm: T2PrimaryVertex
+    //ConstDataVector<xAOD::VertexContainer>*
+    //getFeature(
     //Toggle
     m_trigBjetSecVtxInfo->isValid(true);
 
-    // Getting the first vertex??
+    // Store the SV with higher mass in the collection
+    // Getting the first vertex?? --> or a mean/weigthed mean? maybe
+    /*float x = 0.;
+    float y = 0.;
+    float z = 0.;
+    const unsigned int nv = myVertices.size();
+    for(auto & sv: myVertices)
+    {
+        x += sv->position->x();
+        y += sv->position->y();
+        z += sv->position->z();
+    }
+    const Amg::Vector3D SecVrt(x/float(nv),y/float(nv),z/float(nv));*/
+
     const Amg::Vector3D SecVrt = myVertices[0]->position();
 
     double distance = (SecVrt - pvselected->position()).mag();
@@ -683,7 +692,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     // But, let's change the order, firts tracks: this should be a function depending
     // of the object muon, electron, MET, JET
     // -----------------------------------
-    float m_et_EFjet = 0;
+    /*float m_et_EFjet = 0;
     if(m_instance == "EF") 
     {
         std::vector<const TrigOperationalInfo*> m_vectorOperationalInfo;
@@ -715,20 +724,21 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
                 m_et_EFjet = (*m_operationalInfo)->get("EFJetEt");
             }
         }
-    }
+    }*/
 
     // Set properties of the EF-jet 
-    m_trigBjetJetInfo->setEtaPhiJet(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
+    /*m_trigBjetJetInfo->setEtaPhiJet(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
     m_trigBjetJetInfo->setEtaPhiRoI(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
-    m_trigBjetJetInfo->setEtJet(m_et_EFjet);
-  
-    //xAOD jets from TE
-    ATH_MSG_DEBUG( "pass 1 " << m_et_EFjet);
+    m_trigBjetJetInfo->setEtJet(m_et_EFjet);*/
+    
+    //xAOD jets from TE: Nota que tiene que haber una coleccion de jets (en concreto 1-unico jet
+    // por RoI, debido a que se ha construido el RoI a partir de los jets!! --> por tanto, esto me interesara
+    /*ATH_MSG_DEBUG( "pass 1 " << m_et_EFjet);
     HLT::ErrorCode xaodc = checkxAODJets(inputTE);
     if( xaodc != HLT::OK )
     {
         return xaodc;
-    }	
+    }*/	
   
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Ready to get the tracks & vertices
@@ -794,9 +804,12 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     if(status != HLT::OK) 
     {
      	ATH_MSG_DEBUG("No HLT track collection retrieved");
-        return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE); // Should I return?
+        //return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE); // Should I return?
     } 
-    ATH_MSG_DEBUG("HLT track collection retrieved");
+    else
+    {
+        ATH_MSG_DEBUG("HLT track collection retrieved");
+    }
     
     // -----------------------------------
     // Get secondary vertex collection 
@@ -804,7 +817,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     HLT::ErrorCode retSVstatus = getSecVtxCollection(pointerToEFSecVtxCollections, inputTE);
     if(retSVstatus != HLT::OK)
     {
-        ATH_MSG_DEBUG("No secondary vertex collection retrieved");
+        ATH_MSG_DEBUG("No secondary vertex collection retrieved... ending the algorithm");
         return retSVstatus;
     } 
     ATH_MSG_DEBUG("Secondary vertex collection retrieved");
@@ -905,44 +918,51 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     ATH_MSG_DEBUG("Done set input  z-vtx to trackjet tool " << m_trigBjetPrmVtxInfo->zPrmVtx());
     
     // Get number of reconstructed tracks in this RoI
-    m_totTracks = m_taggerHelper->getTrackNumber(pointerToEFTrackCollections);
-    for(unsigned int j = 0; j < m_totTracks; ++j) 
+    if(pointerToEFTrackCollections)
     {
-        const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
-        if(m_mon_validation)
+        m_totTracks = m_taggerHelper->getTrackNumber(pointerToEFTrackCollections);
+        for(unsigned int j = 0; j < m_totTracks; ++j) 
         {
-            m_mon_trk_a0.push_back(track->d0());
-            m_mon_trk_z0.push_back(track->z0());
-        }
+            const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
+            if(m_mon_validation)
+            {
+                m_mon_trk_a0.push_back(track->d0());
+                m_mon_trk_z0.push_back(track->z0());
+            }
         
-        if(efTrackSel(track, j)) 
-        {
-            m_totSelTracks++;
-            TrigBjetTrackInfo trigBjetTrackInfo(track);
+            if(efTrackSel(track, j)) 
+            {
+                m_totSelTracks++;
+                TrigBjetTrackInfo trigBjetTrackInfo(track);
             
-            float d0Corr=0, z0Corr=0;
-            d0Corr=track->d0(); 
-            z0Corr=track->z0();
-            trigBjetTrackInfo.setIPCorr(d0Corr, z0Corr);
-            ATH_MSG_DEBUG("  " << trigBjetTrackInfo);
-            trigBjetTrackInfoVector.push_back(trigBjetTrackInfo);
-            //m_trackJetFinderTool->addTrack(track, j);
-      	}
+                float d0Corr=0, z0Corr=0;
+                d0Corr=track->d0(); 
+                z0Corr=track->z0();
+                trigBjetTrackInfo.setIPCorr(d0Corr, z0Corr);
+                ATH_MSG_DEBUG("  " << trigBjetTrackInfo);
+                trigBjetTrackInfoVector.push_back(trigBjetTrackInfo);
+      	    }
+        }
+    }
+    else
+    {
+        m_totTracks = 0;
     }
     
-    std::vector<int> tracksTrackJet;
-    float etaTrackJet, phiTrackJet;
+    //std::vector<int> tracksTrackJet;
+    //float etaTrackJet, phiTrackJet;
     
-    m_trackJetFinderTool->findJet(tracksTrackJet, etaTrackJet, phiTrackJet);
-    if(etaTrackJet != -99 && phiTrackJet != -99) 
-    {
-     	m_trigBjetJetInfo->setEtaPhiTrkJet(etaTrackJet, phiTrackJet);
-    } 
-    else 
-    {
-     	m_trigBjetJetInfo->setEtaPhiTrkJet(m_trigBjetJetInfo->etaRoI(), m_trigBjetJetInfo->phiRoI());
-        ATH_MSG_DEBUG("eta Jet = eta RoI");
-    }
+    // Not using it...
+    //m_trackJetFinderTool->findJet(tracksTrackJet, etaTrackJet, phiTrackJet);
+    //if(etaTrackJet != -99 && phiTrackJet != -99) 
+    //{
+    // 	m_trigBjetJetInfo->setEtaPhiTrkJet(etaTrackJet, phiTrackJet);
+    //} 
+    //else 
+    //{
+    m_trigBjetJetInfo->setEtaPhiTrkJet(m_trigBjetJetInfo->etaRoI(), m_trigBjetJetInfo->phiRoI());
+    ATH_MSG_DEBUG("eta Jet = eta RoI");
+    //}
     ATH_MSG_DEBUG(*m_trigBjetJetInfo);
   
     // -----------------------------------
