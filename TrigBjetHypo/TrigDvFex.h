@@ -86,14 +86,19 @@ class TrigDvFex: public HLT::FexAlgo
 
         /** @brief To retrieve track collections reconstructed at EF and stored in TrackParticleContainer. */
         HLT::ErrorCode getTrackCollection(const xAOD::TrackParticleContainer*&, const HLT::TriggerElement*);
-       /** @brief To retrieve primary vertex collections reconstructed and stored in VxContainer. */
-        HLT::ErrorCode getPrmVtxCollection(const xAOD::VertexContainer*&, const HLT::TriggerElement*,const std::string&);
+       /** @brief To retrieve primary vertex collections reconstructed and stored in VxContainer. 
+        *  Note that if the PV was not retrieve using the collection already stored by the previous 
+        *  SV builder algorithm (issvalg=fals), then the PV is extracted from the ID Tracking algorithms */
+        HLT::ErrorCode getPrmVtxCollection(const xAOD::VertexContainer*&, const HLT::TriggerElement*,
+                const std::string&,const bool & issvalg);
         /** @brief To retrieve secondary vertex collections reconstructed and stored in Trk::VxSecVertexInfoContainer. */
         HLT::ErrorCode getSecVtxCollection(const Trk::VxSecVertexInfoContainer*&, const HLT::TriggerElement*);
         /** @brief To set the datamember related with the EF secondary vertex information. */
         HLT::ErrorCode setSecVtxInfo(const Trk::VxSecVertexInfoContainer*&, const xAOD::Vertex*&);
-        /** @brief To check if there are a well formed xAOD::Jet collection attached to the TE. */
-        HLT::ErrorCode checkxAODJets(const HLT::TriggerElement*);
+        /** @brief Retrieved the xAOD::Jet collection attached to the TE. */
+        HLT::ErrorCode getJet(const xAOD::Jet * &,const HLT::TriggerElement*);
+        /** @brief Set the beam-spot related stuff on the relevant datamembers */
+        HLT::ErrorCode setBeamSpotRelated();
     
         /** @brief To select EF tracks. */
         bool efTrackSel(const xAOD::TrackParticle*&, unsigned int);
@@ -114,7 +119,10 @@ class TrigDvFex: public HLT::FexAlgo
         TrigBjetJetInfo*    m_trigBjetJetInfo;
         /** @brief Internal EDM class for track parameter information, defined in TrigBjetDataHelper. */ 
         std::vector<TrigBjetTrackInfo>* m_trigBjetTrackInfoVector;
-    
+   
+        /** @brief check variable to control PV retrieval */
+        bool m_setPVInfo;
+
         /** @brief track reconstruction algorithm. */
         int m_algo;
         /** @brief switch to use primary vertex computed with TrigT2HistoPrmVtx or InDetTrigPriVxFinder algorithm. */
