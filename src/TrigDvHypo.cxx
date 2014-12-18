@@ -94,35 +94,6 @@ HLT::ErrorCode TrigDvHypo::hltExecute(const HLT::TriggerElement* outputTE, bool&
     //* initialise monitoring variables *//
     m_cutCounter = -1;
 
-    //* Retrieve beamspot information *//
-    if(m_useBeamSpotFlag) 
-    {
-      	IBeamCondSvc* m_iBeamCondSvc; 
-    	StatusCode sc = service("BeamCondSvc", m_iBeamCondSvc);
-      	if(sc.isFailure() || m_iBeamCondSvc == 0) 
-        {
-            ATH_MSG_WARNING("Could not retrieve Beam Conditions Service. ");
-        }
-        else 
-        {
-           int beamSpotStatus = 0;        
-           int beamSpotBitMap = m_iBeamCondSvc->beamStatus();    
-	    
-           // To be promoted to a function BjetHelper..
-           beamSpotStatus = ((beamSpotBitMap & 0x4) == 0x4);  
-           if(beamSpotStatus) 	    
-           {
-               beamSpotStatus = ((beamSpotBitMap & 0x3) == 0x3);
-           }
-           else
-           {
-               m_cutCounter=0;
-               pass = false;      
-               return HLT::OK;
-           }
-        }
-    }
-  
     //* Get RoI descriptor *//
     const TrigRoiDescriptor* roiDescriptor = 0;
     HLT::ErrorCode stat = getFeature(outputTE, roiDescriptor, m_jetKey);
@@ -161,20 +132,50 @@ HLT::ErrorCode TrigDvHypo::hltExecute(const HLT::TriggerElement* outputTE, bool&
  
     if(trigEFBjetContainer->size() > 1) 
     {
-        ATH_MSG_ERROR("More than one BTagging object to analyse: this should never happen");
+        ATH_MSG_ERROR("More than one EFBjet-SV object to analyse: this should never happen");
     	return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
     }
     else if(trigEFBjetContainer->size() == 0) 
     {
-        ATH_MSG_ERROR("No BTagging object to analyse: this should never happen");
+        ATH_MSG_ERROR("No EFBjet-SV object to analyse: this should never happen");
         return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
     }
+    
+    //* Retrieve beamspot information *//
+    if(m_useBeamSpotFlag) 
+    {
+      	IBeamCondSvc* m_iBeamCondSvc; 
+    	StatusCode sc = service("BeamCondSvc", m_iBeamCondSvc);
+      	if(sc.isFailure() || m_iBeamCondSvc == 0) 
+        {
+            ATH_MSG_WARNING("Could not retrieve Beam Conditions Service. ");
+        }
+        else 
+        {
+           int beamSpotStatus = 0;        
+           int beamSpotBitMap = m_iBeamCondSvc->beamStatus();    
+	    
+           // To be promoted to a function BjetHelper..
+           beamSpotStatus = ((beamSpotBitMap & 0x4) == 0x4);  
+           if(beamSpotStatus) 	    
+           {
+               beamSpotStatus = ((beamSpotBitMap & 0x3) == 0x3);
+           }
+           else
+           {
+               m_cutCounter=0;
+               pass = false;      
+               return HLT::OK;
+           }
+        }
+    }
+  
    
-    //* Add TrigPassBits for EF b-jets *//
+    //* Add TrigPassBits for EF SV *//
     bitsEF = HLT::makeTrigPassBits(trigEFBjetContainer);
 
     //* to separate bad input TE and true behaviour *//
-    m_cutCounter=1;
+    //m_cutCounter=1;
   
     bool result = true;
     //* Loop over EFBjets and perform cut */
@@ -185,18 +186,21 @@ HLT::ErrorCode TrigDvHypo::hltExecute(const HLT::TriggerElement* outputTE, bool&
 	    // number of tracks
         if(trigEFBjet->xNVtx() < m_ntrackDV)
         {
+            m_cutCounter = 1;
             result *= false;
         }
         
         // Invariant mass of the SV
         if(trigEFBjet->xMVtx() < m_massDV)
         {
+            m_cutCounter = 2;
             result *= false;
         }
         
         // distance to the PV
 	    if(trigEFBjet->xSV() < m_rDV)
         {
+            m_cutCounter = 3; 
             result *= false;
         }
     
@@ -221,8 +225,6 @@ HLT::ErrorCode TrigDvHypo::hltExecute(const HLT::TriggerElement* outputTE, bool&
         ATH_MSG_DEBUG("REGTEST: Trigger decision is " << pass);
     }
 
-    //* Monitoring of method used to perform the cut *//
-
     //* Print TrigPassBits to outputTE *//
     // Nota que estic cambiant EFBjets -->  DvEFBjets
     if(attachBits(outputTE, bitsEF, "DvEFBjets") != HLT::OK) 
@@ -232,7 +234,7 @@ HLT::ErrorCode TrigDvHypo::hltExecute(const HLT::TriggerElement* outputTE, bool&
     
     if(m_acceptAll) 
     {
-    	m_cutCounter = 2;
+    	m_cutCounter = 4;
     	pass = true;
     }
     return HLT::OK;

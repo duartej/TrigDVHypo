@@ -19,25 +19,25 @@ class TrigDvFexMonitoring(TrigGenericMonitoringToolConfig):
         
         self.Histograms += [ defineHistogram('sv_trkInJet', type='TH1F',
             title='energy of all the tracks in the jet used to build the vertex?;E_{track}^{jet} [GeV];Entries', \
-                    xbins=200,xmin=0,xmax=500) ]
+                    xbins=501,xmin=0,xmax=500) ]
         
         self.Histograms += [ defineHistogram('sv_rdv', type='TH1F',        
             title='secondary vertex radial distance from the primary vertex;r_{DV} [mm];Entries', \
-                    xbins=200,xmin=-500,xmax=500) ]
+                    xbins=501,xmin=-500,xmax=500) ]
         
         self.Histograms += [ defineHistogram('sv_Ldv', type='TH1F',        
             title='secondary vertex 2d-distance (in R-Phi plane) from the primary vertex;'+\
-                    'L_{DV} [mm];Entries',xbins=200,xmin=-500,xmax=500) ]
+                    'L_{DV} [mm];Entries',xbins=501,xmin=-500,xmax=500) ]
 
         self.Histograms += [ defineHistogram('sv_ntrk', type='TH1F',        
-            title='secondary vertex track multiplicity;N_{trk};Entries',xbins=51,xmin=0,xmax=50) ]
+            title='secondary vertex track multiplicity;N_{trk};Entries',xbins=26,xmin=0,xmax=25) ]
        
         self.Histograms += [ defineHistogram('sv_n2trk', type='TH1F',        
             title='secondary vertex 2-track seeds;N_{2-tracks-seeds};Entries',xbins=26,xmin=0,xmax=25) ]
         
         self.Histograms += [ defineHistogram('sv_fre', type='TH1F',        
             title='energy fraction between the secondary vertex and the jet;E_{SV}/E_{jet};Entries',
-            xbins=100,xmin=0,xmax=1) ]
+            xbins=100,xmin=0,xmax=200) ]
 
         # Tracks
         self.Histograms += [ defineHistogram('trk_a0_sel', type='TH1F', 

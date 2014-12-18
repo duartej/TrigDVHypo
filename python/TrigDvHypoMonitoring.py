@@ -5,7 +5,8 @@ class TrigDvHypoMonitoring(TrigGenericMonitoringToolConfig):
         super(TrigDvHypoMonitoring, self).__init__(name)
         # ----> remove this line and change labels and ranges  
         self.Histograms = [ defineHistogram('CutCounter', type='TH1F', title="Bjet Hypo cut counter",
-            xbins=4, xmin=-1.5, xmax=2.5,labels='No Bjet obj:No usable beam spot:Rejected:Accepted') ]
+            xbins=6, xmin=-1.5, xmax=4.5,labels='No SV- obj:No usable beam spot:Rejected (nTrackVtx):'+\
+                    'Rejected (Mass):Rejected (decay length):Accepted') ]
 
 
 class TrigEFDvHypoValidationMonitoring(TrigDvHypoMonitoring):
