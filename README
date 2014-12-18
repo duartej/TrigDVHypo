@@ -20,6 +20,9 @@
          which algorithm is that. Identified the sequence (therVertex_tracks, so
          it should be one of the algorithms of the chain: 
 https://svnweb.cern.ch/trac/atlasoff/browser/InnerDetector/InDetExample/InDetTrigRecExample/tags/InDetTrigRecExample-00-11-29/python/EFInDetConfig.py
+         * OR I think I localized the cuts in the theVxSecondary, at least combined with 
+         the ones above, for instance change the CutBLayHits from 1 to 0, CutSiHits from 7 to 4?,... 
+         (InDetTrigVxSecondary.InDetTrigVxSecondary_LoadTools package)
  * Hypo
    - Should I investigate other cutting variables? d0, ..
 
