@@ -71,13 +71,15 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareProperty ("TrkSel_Z0",          m_trkSelZ0           = 300.0*CLHEP::mm);
   declareProperty ("TrkSel_Pt",          m_trkSelPt           = 4.0*CLHEP::GeV);
 
-  declareMonitoredVariable("sv_m",        m_svMass,      AutoClear);
-  declareMonitoredVariable("sv_trkInJet", m_svEtrkInJet, AutoClear);
-  declareMonitoredVariable("sv_rdv",      m_svR,         AutoClear);
-  declareMonitoredVariable("sv_Ldv",      m_svL,         AutoClear);
-  declareMonitoredVariable("sv_ntrk",     m_nTrk,        AutoClear);
-  declareMonitoredVariable("sv_n2trk",    m_n2Trk,       AutoClear);
-  declareMonitoredVariable("sv_fre",      m_Efr,         AutoClear);
+  declareMonitoredVariable("sv_m",        m_mon_svMass,      AutoClear);
+  declareMonitoredStdContainer("sv_xy",   m_mon_svXY,        AutoClear);
+  declareMonitoredVariable("sv_z",        m_mon_svZ,         AutoClear);
+  declareMonitoredVariable("sv_trkInJet", m_mon_svEtrkInJet, AutoClear);
+  declareMonitoredVariable("sv_rdv",      m_mon_svR,         AutoClear);
+  declareMonitoredVariable("sv_Ldv",      m_mon_svL,         AutoClear);
+  declareMonitoredVariable("sv_ntrk",     m_mon_nTrk,        AutoClear);
+  declareMonitoredVariable("sv_n2trk",    m_mon_n2Trk,       AutoClear);
+  declareMonitoredVariable("sv_fre",      m_mon_Efr,         AutoClear);
 
   declareMonitoredStdContainer("trk_a0",            m_mon_trk_a0,        AutoClear);
   declareMonitoredStdContainer("trk_a0_sel",        m_mon_trk_a0_sel,    AutoClear);
@@ -420,13 +422,16 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
         ATH_MSG_DEBUG("    * 2D(R/phi) decay length: " << dist2D/CLHEP::mm << " [mm]");
     }
     // Monitoring
-    m_svMass     = m_trigBjetSecVtxInfo->vtxMass()/CLHEP::GeV;
-    m_svEtrkInJet= myVKalSecVertexInfo->energyTrkInJet()/CLHEP::GeV;
-    m_svR        = m_trigBjetSecVtxInfo->decayLengthSignificance()/CLHEP::mm;
-    m_svL        = dist2D;
-    m_nTrk       = m_trigBjetSecVtxInfo->nTrksInVtx();
-    m_n2Trk      = m_trigBjetSecVtxInfo->n2TrkVtx();
-    m_Efr        = m_trigBjetSecVtxInfo->energyFraction();
+    m_mon_svMass     = m_trigBjetSecVtxInfo->vtxMass()/CLHEP::GeV;
+    m_mon_svXY.push_back(myVertices[0]->position().x());
+    m_mon_svXY.push_back(myVertices[0]->position().y());
+    m_mon_svZ        = myVertices[0]->position().z();
+    m_mon_svEtrkInJet= myVKalSecVertexInfo->energyTrkInJet()/CLHEP::GeV;
+    m_mon_svR        = m_trigBjetSecVtxInfo->decayLengthSignificance()/CLHEP::mm;
+    m_mon_svL        = dist2D;
+    m_mon_nTrk       = m_trigBjetSecVtxInfo->nTrksInVtx();
+    m_mon_n2Trk      = m_trigBjetSecVtxInfo->n2TrkVtx();
+    m_mon_Efr        = m_trigBjetSecVtxInfo->energyFraction();
 
     return HLT::OK;
 }
@@ -764,16 +769,6 @@ HLT::ErrorCode TrigDvFex::setBeamSpotRelated()
 // just use outputTE, which is safer (although inputTE is slightly faster, marginaly in fact)
 HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::TriggerElement* outputTE) 
 {
-    // --> FIXME
-    // WORKFLOW: 
-    //          1. Extract ROI
-    //          2. Extract Secondary Vertices from algorithm
-    //               |--- InDet::TrigVxSecondaryCombo/TrigVxSecondaryCombo_Bjet_EF  (Package: InDetTrigVxSecondary) 
-    //             being the inputs TE 'HLT_j55_eta_jsplit_EFID' and 'HLT_super_EFID_prmVtxCombo' and the output
-    //             [HLT_j55_eta_jsplit_EFID__superVtx]   
-    //             Need to know the Secondary vertices input, etc.. (I know there is also a secondary vertex info)
-    //          3. NO NEED From PV, either Tracks, either anything else!!!
-    //
     ATH_MSG_DEBUG("Executing TrigDvFex");
 
     // Clear and initialize data members
@@ -808,7 +803,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     HLT::ErrorCode retsvstatus = getSecVtxCollection(pointerToEFSecVtxCollections, inputTE);
     if(retsvstatus != HLT::OK)
     {
-        ATH_MSG_DEBUG("No sec:ondary vertex collection retrieved... Stopping execution");
+        ATH_MSG_DEBUG("No secondary vertex collection retrieved... Stopping execution");
         return retsvstatus;
     } 
     ATH_MSG_DEBUG("Secondary vertex collection retrieved");
@@ -832,7 +827,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     if(retpvstatus != HLT::OK)
     {
         ATH_MSG_DEBUG("No primary vertex collection retrieved, this is an indication" 
-                << " that there is no Secondary vertex collection either. Exiting...");
+                << " that there is no Secondary vertex collection either. Stopping...");
 	    return retpvstatus;
     }
     ATH_MSG_DEBUG("Primary vertex collection retrieved");
@@ -869,13 +864,13 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
         }
         else
         {
-            ATH_MSG_DEBUG("Empty primary vertex collection retrieved. Exiting execution...");
+            ATH_MSG_DEBUG("Empty primary vertex collection retrieved. Stopping execution...");
             return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
         }
     }
     else   
     {
-        ATH_MSG_DEBUG("No primary vertex collection retrieved. Exiting execution...");
+        ATH_MSG_DEBUG("No primary vertex collection retrieved. Stopping execution...");
         return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
     }
 
@@ -999,10 +994,6 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     // Ready to get the tracks & vertices
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    // -----------------------------------
-    // Retrieve beamspot information
-    // -----------------------------------
-    // NOT NEEDED!!! Right?
    
     // Create pointers to collections
     const xAOD::TrackParticleContainer * pointerToEFTrackCollections = 0;

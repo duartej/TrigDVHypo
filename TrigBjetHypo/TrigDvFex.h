@@ -162,13 +162,15 @@ class TrigDvFex: public HLT::FexAlgo
         //////////////////////
         
         /** @brief to monitor sv build quantities */
-        float m_svMass;
-        float m_svEtrkInJet;
-        float m_svR;
-        float m_svL;
-        float m_Efr;
-        int   m_nTrk;
-        int   m_n2Trk;
+        float m_mon_svMass;
+        std::vector<float> m_mon_svXY;
+        float m_mon_svZ;
+        float m_mon_svEtrkInJet;
+        float m_mon_svR;
+        float m_mon_svL;
+        float m_mon_Efr;
+        int   m_mon_nTrk;
+        int   m_mon_n2Trk;
 
         /** @brief to monitor track selection. */
         std::vector<float> m_listCutApplied;
