@@ -50,11 +50,7 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareProperty ("AlgoId",             m_algo);
   declareProperty ("Instance",           m_instance);
   declareProperty ("JetKey",             m_jetKey     = ""); //"" needed for default config, SplitJet for new config
-  // Note that "T2PrimaryVertex" belongs to "EFHistoPrmVtx" but has been used 
-  // by the TrigVxSecondayrCombo algorithm to do all the calculation related the SV.
-  // Also, is chosen a PV with better fit quality if there is more than on PV, altough
-  // the criteria should be the highest sum_{track} pt^2...
-  declareProperty ("PriVtxKey",          m_priVtxKey  = "T2PrimaryVertex");
+  declareProperty ("PriVtxKey",          m_priVtxKey  = "EFHistoPrmVtx");
 
   declareProperty ("onlinemon",          m_mon_online = true);
   declareProperty ("validation",         m_mon_validation = true);
@@ -74,6 +70,14 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareProperty ("TrkSel_D0",          m_trkSelD0           = 300.0*CLHEP::mm);
   declareProperty ("TrkSel_Z0",          m_trkSelZ0           = 300.0*CLHEP::mm);
   declareProperty ("TrkSel_Pt",          m_trkSelPt           = 4.0*CLHEP::GeV);
+
+  declareMonitoredVariable("sv_m",        m_svMass,      AutoClear);
+  declareMonitoredVariable("sv_trkInJet", m_svEtrkInJet, AutoClear);
+  declareMonitoredVariable("sv_rdv",      m_svR,         AutoClear);
+  declareMonitoredVariable("sv_Ldv",      m_svL,         AutoClear);
+  declareMonitoredVariable("sv_ntrk",     m_nTrk,        AutoClear);
+  declareMonitoredVariable("sv_n2trk",    m_n2Trk,       AutoClear);
+  declareMonitoredVariable("sv_fre",      m_Efr,         AutoClear);
 
   declareMonitoredStdContainer("trk_a0",            m_mon_trk_a0,        AutoClear);
   declareMonitoredStdContainer("trk_a0_sel",        m_mon_trk_a0_sel,    AutoClear);
@@ -170,7 +174,7 @@ HLT::ErrorCode TrigDvFex::getTrackCollection(const xAOD::TrackParticleContainer*
     HLT::ErrorCode status = getFeatures(whateverTE, vectorOfEFTrackCollections, ""); 
     if(status != HLT::OK) 
     {
-       ATH_MSG_ERROR("Failed to get TrackParticleContainer from the trigger element");
+       ATH_MSG_WARNING("Failed to get TrackParticleContainer from the trigger element");
     } 
     else if(msgLvl() <= MSG::DEBUG) 
     { 
@@ -189,7 +193,7 @@ HLT::ErrorCode TrigDvFex::getTrackCollection(const xAOD::TrackParticleContainer*
 
 //** ----------------------------------------------------------------------------------------------------------------- **//
 HLT::ErrorCode TrigDvFex::getPrmVtxCollection(const xAOD::VertexContainer*& pointerToEFPrmVtxCollections, 
-	const HLT::TriggerElement* whateverTE, const std::string & vtxkey, const bool & ispvfromsvalg) 
+	const HLT::TriggerElement* whateverTE, const std::string & vtxkey) 
 {
     std::vector<const xAOD::VertexContainer*> vectorOfEFPrmVtxCollections;
     HLT::ErrorCode status = getFeatures(whateverTE, vectorOfEFPrmVtxCollections, vtxkey);
@@ -205,16 +209,9 @@ HLT::ErrorCode TrigDvFex::getPrmVtxCollection(const xAOD::VertexContainer*& poin
         ATH_MSG_ERROR("The vector of  xAOD::VertexContainer have more than 1 element!");
         return HLT::ErrorCode(HLT::Action::ABORT_CHAIN,HLT::Reason::NAV_ERROR);
     }
-
+    
     const xAOD::VertexContainer * vectorOfPv = vectorOfEFPrmVtxCollections[0];
-    // Check if we have a unique valid collection (when extracted from the SV-builder algorithm
-    if( ispvfromsvalg && vectorOfPv->size() != 1)
-    {
-        ATH_MSG_ERROR("The PV '" << vtxkey << "' coming from the SV-builder algorithm,"
-               " have more than 1 element. But by construction, shouldn't!");
-        return HLT::ErrorCode(HLT::Action::ABORT_CHAIN,HLT::Reason::NAV_ERROR);
-    }
-       
+    
     for( auto & pv : *vectorOfPv)
     {
         // This check is probably redundant, but nevertheless...
@@ -256,7 +253,7 @@ HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContaine
     }
     else if( vectorOfSecVtxCollections.size() < 1 )
     {
-        ATH_MSG_ERROR("The vector of VxSecVertexInfoContainer have none element!");
+        ATH_MSG_WARNING("The vector of VxSecVertexInfoContainer have none element!");
         return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
     }
 
@@ -410,9 +407,10 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
     // Note, storing the distance 3D between SV and PV, watch out with the name 
     // of the method!!
     m_trigBjetSecVtxInfo->setDecayLengthSignificance(distance);
+ 
+    const double dist2D = (SecVrt - pvselected->position()).perp();            
     if(msgLvl() <= MSG::DEBUG) 
     {
-        double dist2D = (SecVrt - pvselected->position()).perp();            
 	    ATH_MSG_DEBUG("Calculated secondary vertex decay length with primary vertex at (" 
                 << pvselected->position().x()/CLHEP::mm << "," << pvselected->position().y()/CLHEP::mm
                 << "," << pvselected->position().z()/CLHEP::mm << ") and sec. vtx at ("
@@ -421,6 +419,15 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
         ATH_MSG_DEBUG("    * 3D decay length: " << distance/CLHEP::mm << " [mm]"); 
         ATH_MSG_DEBUG("    * 2D(R/phi) decay length: " << dist2D/CLHEP::mm << " [mm]");
     }
+    // Monitoring
+    m_svMass     = m_trigBjetSecVtxInfo->vtxMass()/CLHEP::GeV;
+    m_svEtrkInJet= myVKalSecVertexInfo->energyTrkInJet()/CLHEP::GeV;
+    m_svR        = m_trigBjetSecVtxInfo->decayLengthSignificance()/CLHEP::mm;
+    m_svL        = dist2D;
+    m_nTrk       = m_trigBjetSecVtxInfo->nTrksInVtx();
+    m_n2Trk      = m_trigBjetSecVtxInfo->n2TrkVtx();
+    m_Efr        = m_trigBjetSecVtxInfo->energyFraction();
+
     return HLT::OK;
 }
 
@@ -812,7 +819,6 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     const xAOD::VertexContainer *   pointerToEFPrmVtxCollections = 0;
     
     std::string vtxlabel;
-    bool ispvfromsvalgo=true;
     if(m_histoPrmVtxAtEF)     // PV from TrigT2HistoPrmVtx
     {
         vtxlabel=m_priVtxKey;
@@ -820,10 +826,9 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     else                      // PV from ID tracking
     {
         vtxlabel="";
-        ispvfromsvalgo=false;
     }
     // retrieve the vtx collection
-    HLT::ErrorCode retpvstatus = getPrmVtxCollection(pointerToEFPrmVtxCollections, inputTE,vtxlabel,ispvfromsvalgo);
+    HLT::ErrorCode retpvstatus = getPrmVtxCollection(pointerToEFPrmVtxCollections, inputTE,vtxlabel);
     if(retpvstatus != HLT::OK)
     {
         ATH_MSG_DEBUG("No primary vertex collection retrieved, this is an indication" 
@@ -832,9 +837,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     }
     ATH_MSG_DEBUG("Primary vertex collection retrieved");
 
-    // Get the PV. If the PV collection is coming from the secondary vertex builder
-    // algorithm, there is just one selected PV. Otherwise, it could be that there
-    // is more than one, so the used criteria is taking the PV with 
+    // Get the PV. If there is more than one, the used criteria is taking the PV with 
     // highest sum_{tracks} pt^2
     const xAOD::Vertex *pvselected = 0;
     if(pointerToEFPrmVtxCollections)

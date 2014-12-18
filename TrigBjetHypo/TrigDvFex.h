@@ -86,11 +86,9 @@ class TrigDvFex: public HLT::FexAlgo
 
         /** @brief To retrieve track collections reconstructed at EF and stored in TrackParticleContainer. */
         HLT::ErrorCode getTrackCollection(const xAOD::TrackParticleContainer*&, const HLT::TriggerElement*);
-       /** @brief To retrieve primary vertex collections reconstructed and stored in VxContainer. 
-        *  Note that if the PV was not retrieve using the collection already stored by the previous 
-        *  SV builder algorithm (issvalg=fals), then the PV is extracted from the ID Tracking algorithms */
+       /** @brief To retrieve primary vertex collections reconstructed and stored in xAOD::VertexContainer. */
         HLT::ErrorCode getPrmVtxCollection(const xAOD::VertexContainer*&, const HLT::TriggerElement*,
-                const std::string&,const bool & issvalg);
+                const std::string&);
         /** @brief To retrieve secondary vertex collections reconstructed and stored in Trk::VxSecVertexInfoContainer. */
         HLT::ErrorCode getSecVtxCollection(const Trk::VxSecVertexInfoContainer*&, const HLT::TriggerElement*);
         /** @brief To set the datamember related with the EF secondary vertex information. */
@@ -162,6 +160,16 @@ class TrigDvFex: public HLT::FexAlgo
         //////////////////////
         //* for monitoring *//
         //////////////////////
+        
+        /** @brief to monitor sv build quantities */
+        float m_svMass;
+        float m_svEtrkInJet;
+        float m_svR;
+        float m_svL;
+        float m_Efr;
+        int   m_nTrk;
+        int   m_n2Trk;
+
         /** @brief to monitor track selection. */
         std::vector<float> m_listCutApplied;
     
