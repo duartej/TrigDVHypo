@@ -9,13 +9,13 @@ class TrigDvFexMonitoring(TrigGenericMonitoringToolConfig):
             title='invariant mass of the secondary vertex candidate;M_{DV} [GeV];Entries', \
                     xbins=200,xmin=0,xmax=500) ]
         
-        self.Histograms += [ defineHistogram('sv_xy', type='TH2F',        
-            title='secondary vertex absolute x-y position;x [mm]; y[mm] ;Entries',
-            xbins=301,xmin=-300,xmax=300,ybins=301,ymin=-300,ymax=300) ]
+        self.Histograms += [ defineHistogram('sv_x,sv_y', type='TH2F',        
+            title='secondary vertex absolute x-y position;x [mm]; y[mm]', \
+                    xbins=301,xmin=-300,xmax=300,ybins=301,ymin=-300,ymax=300) ]
         
         self.Histograms += [ defineHistogram('sv_z', type='TH1F',        
-            title='secondary vertex absolute z-position; z [mm];Entries',
-            xbins=301,xmin=-300,xmax=300,ybins=301,ymin=-300,ymax=300) ]
+            title='secondary vertex absolute z-position; z [mm];Entries', \
+                    xbins=301,xmin=-300,xmax=300) ]
         
         self.Histograms += [ defineHistogram('sv_trkInJet', type='TH1F',
             title='energy of all the tracks in the jet used to build the vertex?;E_{track}^{jet} [GeV];Entries', \

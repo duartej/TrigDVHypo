@@ -72,7 +72,8 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareProperty ("TrkSel_Pt",          m_trkSelPt           = 4.0*CLHEP::GeV);
 
   declareMonitoredVariable("sv_m",        m_mon_svMass,      AutoClear);
-  declareMonitoredStdContainer("sv_xy",   m_mon_svXY,        AutoClear);
+  declareMonitoredVariable("sv_x",        m_mon_svX,         AutoClear);
+  declareMonitoredVariable("sv_y",        m_mon_svY,         AutoClear);
   declareMonitoredVariable("sv_z",        m_mon_svZ,         AutoClear);
   declareMonitoredVariable("sv_trkInJet", m_mon_svEtrkInJet, AutoClear);
   declareMonitoredVariable("sv_rdv",      m_mon_svR,         AutoClear);
@@ -255,7 +256,7 @@ HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContaine
     }
     else if( vectorOfSecVtxCollections.size() < 1 )
     {
-        ATH_MSG_WARNING("The vector of VxSecVertexInfoContainer have none element!");
+        ATH_MSG_DEBUG("The vector of VxSecVertexInfoContainer have none element!");
         return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
     }
 
@@ -423,8 +424,8 @@ HLT::ErrorCode TrigDvFex::setSecVtxInfo(const Trk::VxSecVertexInfoContainer*& po
     }
     // Monitoring
     m_mon_svMass     = m_trigBjetSecVtxInfo->vtxMass()/CLHEP::GeV;
-    m_mon_svXY.push_back(myVertices[0]->position().x());
-    m_mon_svXY.push_back(myVertices[0]->position().y());
+    m_mon_svX        = myVertices[0]->position().x();
+    m_mon_svY        = myVertices[0]->position().y();
     m_mon_svZ        = myVertices[0]->position().z();
     m_mon_svEtrkInJet= myVKalSecVertexInfo->energyTrkInJet()/CLHEP::GeV;
     m_mon_svR        = m_trigBjetSecVtxInfo->decayLengthSignificance()/CLHEP::mm;

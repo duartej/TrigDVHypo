@@ -163,7 +163,8 @@ class TrigDvFex: public HLT::FexAlgo
         
         /** @brief to monitor sv build quantities */
         float m_mon_svMass;
-        std::vector<float> m_mon_svXY;
+        float m_mon_svX;
+        float m_mon_svY;
         float m_mon_svZ;
         float m_mon_svEtrkInJet;
         float m_mon_svR;
