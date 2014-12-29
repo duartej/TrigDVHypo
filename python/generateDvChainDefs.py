@@ -226,6 +226,8 @@ def buildDvChains(jchaindef,dvjetdict,doAtL2AndEF=True,numberOfSubChainDicts=1):
 ###################################################################################
 
 def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1):
+    from AthenaCommon.SystemOfUnits import GeV,mm
+
     L2ChainName = "L2_" + chainDict['chainName']
     EFChainName = "EF_" + chainDict['chainName']
     HLTChainName = "HLT_" + chainDict['chainName']   
@@ -284,7 +286,10 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
         #         algorithmName_seqName_EFID will be the name of the algorithms called
 	#         by this sequence (bjet,InsideOut): [PixelClustering,SCTClustering,...
 	#         Probably here I can change the per default values
-        theBjet_tracks = TrigEFIDSequence("Bjet","bjet","InsideOut").getSequence()        
+        #theBjet_tracks = TrigEFIDSequence("Bjet","bjet","InsideOut").getSequence()   
+        theBjet_tracks = TrigEFIDSequence("Bjet","bjet","OutsideIn").getSequence()   
+        ## -- NEW TRYING TO INVERT SOME CUTS--
+
     else:
         from TrigFastTrackFinder.TrigFastTrackFinder_Config import TrigFastTrackFinder_Jet
         theTrigFastTrackFinder_Jet = [TrigFastTrackFinder_Jet()]
@@ -323,6 +328,39 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     # secondary vertexing
     from InDetTrigVxSecondary.InDetTrigVxSecondary_LoadTools import TrigVxSecondaryCombo_EF
     theVxSecondary = TrigVxSecondaryCombo_EF()
+    # ---> TESTING FIXME
+    #--- Redoing the Vx
+    from AthenaCommon.AppMgr import ToolSvc
+    from InDetVKalVxInJetTool.InDetVKalVxInJetToolConf import InDet__InDetVKalVxInJetTool
+    theVxSecondary.SecVtxFinderList = []
+    InDetVKalVxInJetTool_v2 = InDet__InDetVKalVxInJetTool(name = "InDetEFVKalVxInJetTool_v2",
+            getNegativeTail = False,
+            CutChi2         = 999999,
+            CutSctHits      = 0, 
+            CutPixelHits    = 0,
+            CutSiHits       = 0, #was 4
+            CutBLayHits     = 0,
+            CutSharedHits   = 2,
+            FillHist        = True,
+            CutPt           = 0.5*GeV,
+            CutA0           = 100*mm,
+            CutZVrt         = 1500*mm,
+            MultiVertex     = True,
+            MultiWithPrimary= True,
+            #MultiWithOneTrkVrt=True,
+            VertexMergeCut  = 4.0*mm,
+            #OutputLevel      = DEBUG
+            )
+    ToolSvc += InDetVKalVxInJetTool_v2
+    theVxSecondary.SecVtxFinderList += [ InDetVKalVxInJetTool_v2 ]
+    #theVxSecondary.SecVtxFinderList[0].FillHist=True
+    #theVxSecondary.SecVtxFinderList[0].FillHist=True
+    #theVxSecondary.SecVtxFinderList[0].CutPixelHits=0
+    #theVxSecondary.SecVtxFinderList[0].CutPt=0.5*GeV
+    #theVxSecondary.SecVtxFinderList[0].CutA0=100*mm
+    #theVxSecondary.SecVtxFinderList[0].CutZVrt=1500*mm
+    #print theVxSecondary.SecVtxFinderList[0]
+    #from InDetTrigVxSecondary.InDetTrigVxSecondaryMonitoring import InDetTrigVxSecondaryValidationMonitoring
 
     #--------------------
 
