@@ -35,7 +35,7 @@ TrigDvHypo::TrigDvHypo(const std::string& name, ISvcLocator* pSvcLocator) :
 {
     declareProperty("JetKey",     m_jetKey   = ""     );
     
-    declareProperty("NTrackDV",   m_ntrackDV  = 5      );
+    declareProperty("NTrackDV",   m_ntrackDV  = 2      );
     declareProperty("MassDV",     m_massDV   = 6.*CLHEP::GeV );
     declareProperty("DistanceDV", m_rDV      = 4.*CLHEP::mm );
 
