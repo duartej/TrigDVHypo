@@ -37,7 +37,10 @@ class DvHypo (TrigDvHypo):
             self.Instance  = "EF"
             self.UseBeamSpotFlag = False
 
-        self.JetKey = "SplitJet"  # FIXME: EVERYTHING SPLIT
+        self.JetKey      = "SplitJet"  # FIXME: EVERYTHING SPLIT
+        self.NTrackDV    = 2
+        #self.MassDV     = 
+        #self.DistanceDV =
         
         from TrigTimeMonitor.TrigTimeHistToolConfig import TrigTimeHistToolConfig
         time = TrigTimeHistToolConfig("TimeHistogramForTrigDvHypo")
