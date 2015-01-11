@@ -41,16 +41,16 @@ class TrigDvFexMonitoring(TrigGenericMonitoringToolConfig):
 
         # Tracks
         self.Histograms += [ defineHistogram('trk_a0_sel', type='TH1F', 
-            title="transverse IP for selected tracks",xbins=200, xmin=-300, xmax=300) ]
+            title="transverse IP for selected tracks",xbins=300, xmin=-300, xmax=300) ]
         self.Histograms += [ defineHistogram('trk_S(a0)_sel', type='TH1F', 
-                title="transverse IP significance for selected tracks",xbins=400, xmin=-20.0, xmax=20.0) ]
+                title="transverse IP significance for selected tracks",xbins=401, xmin=-100.0, xmax=100.0) ]
 
         self.Histograms += [ defineHistogram('trk_z0_sel', type='TH1F', 
-                title="longitudinal IP for selected tracks",xbins=200, xmin=-400, xmax=400) ]
+                title="longitudinal IP for selected tracks",xbins=500, xmin=-1500, xmax=1500) ]
         self.Histograms += [ defineHistogram('trk_z0_sel_PV', type='TH1F', 
-                title="longitudinal IP w.r.t. primary vertex for selected tracks",xbins=200, xmin=-300, xmax=300) ]
+                title="longitudinal IP w.r.t. primary vertex for selected tracks",xbins=401, xmin=-300, xmax=300) ]
         self.Histograms += [ defineHistogram('trk_S(z0)_sel', type='TH1F', 
-                title="longitudinal IP significance for selected tracks",xbins=400, xmin=-20.0, xmax=20.0) ]
+                title="longitudinal IP significance for selected tracks",xbins=401, xmin=-500.0, xmax=500.0) ]
         self.Histograms += [ defineHistogram('trk_prob', type='TH1F', 
                 title="track probability estimated by JetProb",xbins=40, xmin=0.0, xmax=1.0) ]
         self.Histograms += [ defineHistogram('roi_nTracks', type='TH1F', 
