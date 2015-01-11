@@ -44,12 +44,12 @@ class DvFex(TrigDvFex):
         
         if algo=="EFID" :
             self.TrkSel_Chi2    = 0.0
-            self.TrkSel_BLayer  = 1
+            self.TrkSel_BLayer  = 0 #1
             self.TrkSel_PixHits = 0
-            self.TrkSel_SiHits  = 7
-            self.TrkSel_D0      = 300.0*mm
+            self.TrkSel_SiHits  = 0 #7
+            self.TrkSel_D0      = 1.0*mm #300.0*mm
             self.TrkSel_Z0      = 1500.0*mm
-            self.TrkSel_Pt      = 500.0*MeV
+            self.TrkSel_Pt      = 1000.0*MeV #500.0*MeV
 
         from TrigTimeMonitor.TrigTimeHistToolConfig import TrigTimeHistToolConfig
         time = TrigTimeHistToolConfig("TimeHistogramForTrigBjetHypo")
