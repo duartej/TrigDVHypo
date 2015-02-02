@@ -286,8 +286,8 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
         #         algorithmName_seqName_EFID will be the name of the algorithms called
 	#         by this sequence (bjet,InsideOut): [PixelClustering,SCTClustering,...
 	#         Probably here I can change the per default values
-        #theBjet_tracks = TrigEFIDSequence("Bjet","bjet","InsideOut").getSequence()   
-        theBjet_tracks = TrigEFIDSequence("Bjet","bjet","OutsideIn").getSequence()   
+        theBjet_tracks = TrigEFIDSequence("Bjet","bjet","InsideOut").getSequence()   
+        #theBjet_tracks = TrigEFIDSequence("Bjet","bjet","OutsideIn").getSequence()   --> OLD
         ## -- NEW TRYING TO INVERT SOME CUTS--
 
     else:
@@ -420,7 +420,8 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     theChainDef.addSequence([EFHistoPrmVtxAllTE_Jet()], superTrackingTE, prmVertexTE)
     theChainDef.addSequence([EFHistoPrmVtxCombo_Jet()], [superTrackingTE,prmVertexTE], comboPrmVtxTE)    
     theChainDef.addSequence(theVxSecondary, [jetTrackTE, comboPrmVtxTE], secVtxTE)
-    theChainDef.addSequence([theDvFex, theDvHypo], secVtxTE, lastTEout)
+    theChainDef.addSequence([theDvFex, theDvHypo], secVtxTE, lastTEout)#--> HASTA AQUI --->
+    #theChainDef.addSequence([theDvFex, theDvHypo], jetTrackTE, lastTEout)
     theChainDef.addSignature(theChainDef.signatureList[-1]['signature_counter']+1, [lastTEout]*int(btagmult))
 
     return theChainDef
