@@ -176,7 +176,7 @@ HLT::ErrorCode TrigDvFex::getTrackCollection(const xAOD::TrackParticleContainer*
     pointerToEFTrackCollections = 0;
 
     std::vector<const xAOD::TrackParticleContainer*> vectorOfEFTrackCollections;
-    HLT::ErrorCode status = getFeatures(whateverTE, vectorOfEFTrackCollections, "bJetTracks"); 
+    HLT::ErrorCode status = getFeatures(whateverTE, vectorOfEFTrackCollections, "");//"bJetTracks"); 
     if(status != HLT::OK) 
     {
        ATH_MSG_ERROR("Failed to get TrackParticleContainer from the trigger element");
@@ -218,6 +218,11 @@ HLT::ErrorCode TrigDvFex::getPrmVtxCollection(const xAOD::VertexContainer*& poin
         ATH_MSG_ERROR("The vector of  xAOD::VertexContainer have more than 1 element!");
         return HLT::ErrorCode(HLT::Action::ABORT_CHAIN,HLT::Reason::NAV_ERROR);
     }
+    else if( vectorOfEFPrmVtxCollections.size() == 0)
+    {
+        pointerToEFPrmVtxCollections = 0;
+        return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
+    }
     
     const xAOD::VertexContainer * vectorOfPv = vectorOfEFPrmVtxCollections[0];
     
@@ -247,7 +252,7 @@ HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContaine
 {
     std::vector<const Trk::VxSecVertexInfoContainer*> vectorOfSecVtxCollections;
     // FIXME:: Harcoded name, change for a property
-    HLT::ErrorCode status = getFeatures(whateverTE, vectorOfSecVtxCollections, "SecVtxInfo");
+    HLT::ErrorCode status = getFeatures(whateverTE, vectorOfSecVtxCollections,"");// "SecVtxInfo");
     if(status != HLT::OK) 
     {
        ATH_MSG_ERROR("Failed to get VxSecVertexInfoContainer from the trigger element");
@@ -283,7 +288,16 @@ HLT::ErrorCode TrigDvFex::getSecVtxCollection(const Trk::VxSecVertexInfoContaine
             //So, the vectorOfSvInfo contains at least one collection 
             // of Secondary Vertices... storing and return
             ATH_MSG_DEBUG("Selected vertex-collection with Secondary Vertex label"); 
-            ATH_MSG_DEBUG("The first SV has z-position = " << vectorOfSv[0]->z());
+            if(msgLvl() <= MSG::DEBUG) 
+            {
+                for(size_t k = 0; k < vectorOfSv.size(); ++k)
+                {
+                    ATH_MSG_DEBUG("SV-" << k << ": (" 
+                            << vectorOfSv[k]->x()/CLHEP::mm << ", "
+                            << vectorOfSv[k]->y()/CLHEP::mm << ", "
+                            << vectorOfSv[k]->z()/CLHEP::mm << ")" );
+                }
+            }
             pointerToSecVtxCollections = vectorOfSvInfo;
             return HLT::OK;
         }
@@ -802,102 +816,21 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     // -----------------------------------
     // Get secondary vertex collection 
     // -----------------------------------
-    /*TRACK-const Trk::VxSecVertexInfoContainer *  pointerToEFSecVtxCollections = 0;
+    const Trk::VxSecVertexInfoContainer *  pointerToEFSecVtxCollections = 0;
 
     HLT::ErrorCode retsvstatus = getSecVtxCollection(pointerToEFSecVtxCollections, inputTE);
+    bool svpresent = false;
     if(retsvstatus != HLT::OK)
     {
-        ATH_MSG_DEBUG("No secondary vertex collection retrieved... Stopping execution");
-        //TRACK-return retsvstatus;
-    } 
-    ATH_MSG_DEBUG("Secondary vertex collection retrieved");TRACK-*/
-
-    // -----------------------------------
-    // Get primary vertex collection
-    // -----------------------------------
-    const xAOD::VertexContainer *   pointerToEFPrmVtxCollections = 0;
-    
-    std::string vtxlabel;
-    if(m_histoPrmVtxAtEF)     // PV from TrigT2HistoPrmVtx
-    {
-        vtxlabel=m_priVtxKey;
+        ATH_MSG_DEBUG("No secondary vertex collection retrieved... Triggering" 
+               << "  with tracks info only");
+        //return retsvstatus;
     }
-    else                      // PV from ID tracking
+    else
     {
-        vtxlabel="";
+        ATH_MSG_DEBUG("Secondary vertex collection retrieved");
+        svpresent=true;
     }
-    // retrieve the vtx collection
-    HLT::ErrorCode retpvstatus = getPrmVtxCollection(pointerToEFPrmVtxCollections, inputTE,vtxlabel);
-    if(retpvstatus != HLT::OK)
-    {
-        ATH_MSG_DEBUG("No primary vertex collection retrieved, this is an indication" 
-                << " that there is no Secondary vertex collection either. Stopping...");
-	    return retpvstatus;
-    }
-    ATH_MSG_DEBUG("Primary vertex collection retrieved");
-
-    // Get the PV. If there is more than one, the used criteria is taking the PV with 
-    // highest sum_{tracks} pt^2
-    const xAOD::Vertex *pvselected = 0;
-    if(pointerToEFPrmVtxCollections)
-    {
-        const size_t npvc = pointerToEFPrmVtxCollections->size();
-        if(npvc == 1)
-        {
-            pvselected = (*pointerToEFPrmVtxCollections)[0];
-        }
-        else if(npvc > 1)
-        {
-            // Aux map to order
-	        std::map<float,const xAOD::Vertex *> auxPVOrder;
-	        // Get as PV, the one with higher sum pt^2 of the tracks
-	        for(const xAOD::Vertex * prmVertex : *pointerToEFPrmVtxCollections)
-            {
-                const size_t ntracks = prmVertex->nTrackParticles(); 
-                float sumpt2 = 0.0;
-		        for( size_t i = 0; i < ntracks; ++i)
-                {
-                    const double trackpt= prmVertex->trackParticle(i)->pt();
-                    sumpt2 += (trackpt*trackpt);
-                }
-                auxPVOrder[sumpt2] = prmVertex;
-            }
-            // Higher sum_{tracks} pt^2 (remember, the highest is the last one
-            // in a std::map 
-            pvselected = auxPVOrder.rbegin()->second;
-        }
-        else
-        {
-            ATH_MSG_DEBUG("Empty primary vertex collection retrieved. Stopping execution...");
-            return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
-        }
-    }
-    else   
-    {
-        ATH_MSG_DEBUG("No primary vertex collection retrieved. Stopping execution...");
-        return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
-    }
-
-    // Filling the relevant info of the Secondary vertex
-    //TRACK-retpvstatus = setSecVtxInfo(pointerToEFSecVtxCollections,pvselected);
-    //TRACK-if(retpvstatus != HLT::OK)
-    //TRACK-{
-    //TRACK-    ATH_MSG_DEBUG("Problems filling the Secondary Vertex related info"); 
-	//TRACK-    return retpvstatus;
-    //TRACK-}
-    
-    // Filling the Auxiliar (relevant) helper classes
-    // --- PrmVtxInfo
-    m_trigBjetPrmVtxInfo->setPrmVtx(pvselected->x(),pvselected->y(),pvselected->z());
-    m_setPVInfo=true;
-    // Updated the pv info with beamspot
-    const HLT::ErrorCode statusbs = setBeamSpotRelated();
-    if( statusbs != HLT::OK )
-    {
-        return statusbs;
-    }
-    
-    // --- Based in tracks!! -- new
     // -----------------------------------
     // Get Track collection 
     // -----------------------------------
@@ -905,8 +838,12 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     HLT::ErrorCode tpstatus = getTrackCollection(pointerToEFTrackCollections,outputTE);
     if(tpstatus != HLT::OK)
     {
-        ATH_MSG_DEBUG("No track collection retrieved... Stopping execution");
-        return tpstatus;
+        ATH_MSG_DEBUG("No track collection retrieved... "); 
+        if(!svpresent)
+        {
+            ATH_MSG_DEBUG("Neither tracks nor Secondary vertex are present... Stopping execution");
+            return tpstatus;
+        }
     } 
     ATH_MSG_DEBUG("Track collection retrieved");
     // Track info
@@ -943,6 +880,101 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     {
         m_totTracks = 0;
     }  
+
+    const xAOD::VertexContainer *   pointerToEFPrmVtxCollections = 0;
+    if(svpresent)
+    {
+        // -----------------------------------
+        // Get primary vertex collection
+        // -----------------------------------
+        std::string vtxlabel;
+        if(m_histoPrmVtxAtEF)     // PV from TrigT2HistoPrmVtx
+        {
+            vtxlabel=m_priVtxKey;
+        }
+        else                      // PV from ID tracking
+        {
+            vtxlabel="";
+        }
+        // retrieve the vtx collection
+        HLT::ErrorCode retpvstatus = getPrmVtxCollection(pointerToEFPrmVtxCollections, inputTE,vtxlabel);
+        if(retpvstatus != HLT::OK)
+        {
+            ATH_MSG_DEBUG("No primary vertex collection retrieved, this is an indication" 
+                    << " that there is no Secondary vertex collection either. Stopping...");
+	        return retpvstatus;
+        }
+        ATH_MSG_DEBUG("Primary vertex collection retrieved");
+
+        // Get the PV. If there is more than one, the used criteria is taking the PV with 
+        // highest sum_{tracks} pt^2
+        const xAOD::Vertex *pvselected = 0;
+        if(pointerToEFPrmVtxCollections)
+        {
+            const size_t npvc = pointerToEFPrmVtxCollections->size();
+            for(size_t k = 0; k < npvc; ++k)
+            {
+                const xAOD::Vertex * _a = (*pointerToEFPrmVtxCollections)[k];
+                ATH_MSG_DEBUG("Vtx-" << k << " vx:" << _a->position().x()/CLHEP::mm 
+                        << " vy:" << _a->position().y()/CLHEP::mm
+                        << " vz:" << _a->position().z()/CLHEP::mm );
+            }
+            if(npvc == 1)
+            {
+                pvselected = (*pointerToEFPrmVtxCollections)[0];
+            }
+            else if(npvc > 1)
+            {
+                // Aux map to order
+	            std::map<float,const xAOD::Vertex *> auxPVOrder;
+	            // Get as PV, the one with higher sum pt^2 of the tracks
+	            for(const xAOD::Vertex * prmVertex : *pointerToEFPrmVtxCollections)
+                {
+                    const size_t ntracks = prmVertex->nTrackParticles(); 
+                    float sumpt2 = 0.0;
+	    	        for( size_t i = 0; i < ntracks; ++i)
+                    {
+                        const double trackpt= prmVertex->trackParticle(i)->pt();
+                        sumpt2 += (trackpt*trackpt);
+                    }
+                    auxPVOrder[sumpt2] = prmVertex;
+                }
+                // Higher sum_{tracks} pt^2 (remember, the highest is the last one
+                // in a std::map 
+                pvselected = auxPVOrder.rbegin()->second;
+            }
+            else
+            {
+                ATH_MSG_DEBUG("Empty primary vertex collection retrieved. Stopping execution...");
+                return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
+            }
+        }
+        else   
+        {
+            ATH_MSG_DEBUG("No primary vertex collection retrieved. Stopping execution...");
+            return HLT::ErrorCode(HLT::Action::CONTINUE,HLT::Reason::MISSING_FEATURE);
+        }
+
+        // Filling the relevant info of the Secondary vertex
+        retpvstatus = setSecVtxInfo(pointerToEFSecVtxCollections,pvselected);
+        if(retpvstatus != HLT::OK)
+        {
+            ATH_MSG_DEBUG("Problems filling the Secondary Vertex related info"); 
+	        return retpvstatus;
+        }
+        
+        // Filling the Auxiliar (relevant) helper classes
+        // --- PrmVtxInfo
+        m_trigBjetPrmVtxInfo->setPrmVtx(pvselected->x(),pvselected->y(),pvselected->z());
+        m_setPVInfo=true;
+        // Updated the pv info with beamspot
+        const HLT::ErrorCode statusbs = setBeamSpotRelated();
+        if( statusbs != HLT::OK )
+        {
+            return statusbs;
+        }
+    }
+    
     
     // --- JetInfo
     // Jets: remember in some previous step, each jet has been associated to
@@ -973,10 +1005,16 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     // one for each SV, if there are more than one...
     TrigEFBjet* trigEFBjet = new TrigEFBjet(roiDescriptor->roiId(), 
 	    m_trigBjetJetInfo->etaJet(), m_trigBjetJetInfo->phiJet(),
-	    0, 0, 0, m_trigBjetPrmVtxInfo->zPrmVtx(), m_trigBjetJetInfo->etJet(),
+	    0, 0, 0, 0.0,  m_trigBjetJetInfo->etJet(),
 	    -1,-1,-1, -1,-1,  // Note, i can use this to fill other stuff if I need 
 	    10.0*CLHEP::mm, 10.0*CLHEP::GeV,  //TRACK-
         0.0, m_totSelTracks);   //TRACK-
+//    TrigEFBjet* trigEFBjet = new TrigEFBjet(roiDescriptor->roiId(), 
+//	    m_trigBjetJetInfo->etaJet(), m_trigBjetJetInfo->phiJet(),
+//	    0, 0, 0, m_trigBjetPrmVtxInfo->zPrmVtx(), m_trigBjetJetInfo->etJet(),
+//	    -1,-1,-1, -1,-1,  // Note, i can use this to fill other stuff if I need 
+//	    10.0*CLHEP::mm, 10.0*CLHEP::GeV,  //TRACK-
+//        0.0, m_totSelTracks);   //TRACK-
         //TRACK-m_trigBjetSecVtxInfo->decayLengthSignificance(), m_trigBjetSecVtxInfo->vtxMass(), 
 	    //TRACK-m_trigBjetSecVtxInfo->energyFraction(), m_trigBjetSecVtxInfo->nTrksInVtx()); 
     
@@ -1032,7 +1070,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
                         << m_trigBjetPrmVtxInfo->yPrmVtx() << "," 
                         << m_trigBjetPrmVtxInfo->zPrmVtx() << ")");
             }
-            /*TRACK-if(pointerToEFSecVtxCollections)
+            if(pointerToEFSecVtxCollections)
             {
                 ATH_MSG_DEBUG("REGTEST:  Secondary vertex: " 
                         << pointerToEFSecVtxCollections->size() << " reconstructed");
@@ -1040,14 +1078,18 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
             else	    
             {
                 ATH_MSG_DEBUG("REGTEST:  Secondary vertex: 0 reconstructed");
-            }TRACK-*/
-            //TRACK-ATH_MSG_DEBUG("REGTEST:  SV Decay Length: " 
-            //TRACK-        <<  m_trigBjetSecVtxInfo->decayLengthSignificance()/CLHEP::mm << " mm, SV mass: " 
-            //TRACK-        <<  m_trigBjetSecVtxInfo->vtxMass()/CLHEP::GeV << " GeV, SV efrac: " 
-            //TRACK-        <<  m_trigBjetSecVtxInfo->energyFraction()/CLHEP::GeV
-            //TRACK-        << " GeV, SV 2-track vertex multiplicity: " 
-            //TRACK-        << m_trigBjetSecVtxInfo->n2TrkVtx() 
-            //TRACK-        << " , SV tracks multiplicity: " << m_trigBjetSecVtxInfo->nTrksInVtx());
+            }
+            
+            if(svpresent)
+            {
+                ATH_MSG_DEBUG("REGTEST:  SV Decay Length: " 
+                        <<  m_trigBjetSecVtxInfo->decayLengthSignificance()/CLHEP::mm << " mm, SV mass: " 
+                        <<  m_trigBjetSecVtxInfo->vtxMass()/CLHEP::GeV << " GeV, SV efrac: " 
+                        <<  m_trigBjetSecVtxInfo->energyFraction()/CLHEP::GeV
+                        << " GeV, SV 2-track vertex multiplicity: " 
+                        << m_trigBjetSecVtxInfo->n2TrkVtx() 
+                        << " , SV tracks multiplicity: " << m_trigBjetSecVtxInfo->nTrksInVtx());
+            }
         }
     }
 
