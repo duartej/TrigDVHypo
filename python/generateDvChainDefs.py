@@ -273,8 +273,8 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     #  elements, but it takes all the RoI of each jet and it builds only one (superRoI), so
     #  there is one RoI for all the jet collection... IS this pretty equivalent to all the
     #  info in the Hadronic CAL? 
-    from TrigBjetHypo.TrigSuperRoiBuilderAllTEConfig import getSuperRoiBuilderAllTEInstance
-    theSuperRoi=getSuperRoiBuilderAllTEInstance()
+    # NEW-TRACKS from TrigBjetHypo.TrigSuperRoiBuilderAllTEConfig import getSuperRoiBuilderAllTEInstance
+    # NEW-TRACKS theSuperRoi=getSuperRoiBuilderAllTEInstance()
 
     #--------------------
 
@@ -307,52 +307,52 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     #  X = Muon/eGamma/muonIso/Tau/TauCore/TauIso//Bphysics/FullScan/BeamSpot/Tile/
     #     FullScan_ZF_Only/Cosmic
     # Configuration: Trigger/TrigAlgorithms/TrigFastTrackFinder/python/TrigFastTrackFinder_Config.py
-    from TrigFastTrackFinder.TrigFastTrackFinder_Config import TrigFastTrackFinder_Jet
-    theTrigFastTrackFinder_Jet = [TrigFastTrackFinder_Jet()]
-    from TrigInDetConf.TrigInDetSequence import TrigInDetSequence
-    theFastTrackFinderxAOD = TrigInDetSequence("BjetPrmVtx","bjet","FastxAOD").getSequence()
-    theVertex_tracks = TrigEFIDSequence("BjetPrmVtx","bjet","DataPrep").getSequence()            
-    theVertex_tracks += theTrigFastTrackFinder_Jet
-    theVertex_tracks += theFastTrackFinderxAOD # does this convert to xAOD?
+    # NEW TRACKS-from TrigFastTrackFinder.TrigFastTrackFinder_Config import TrigFastTrackFinder_Jet
+    # NEW TRACKS-theTrigFastTrackFinder_Jet = [TrigFastTrackFinder_Jet()]
+    # NEW TRACKS-from TrigInDetConf.TrigInDetSequence import TrigInDetSequence
+    # NEW TRACKS-theFastTrackFinderxAOD = TrigInDetSequence("BjetPrmVtx","bjet","FastxAOD").getSequence()
+    # NEW TRACKS-theVertex_tracks = TrigEFIDSequence("BjetPrmVtx","bjet","DataPrep").getSequence()            
+    # NEW TRACKS-theVertex_tracks += theTrigFastTrackFinder_Jet
+    # NEW TRACKS-theVertex_tracks += theFastTrackFinderxAOD # does this convert to xAOD?
 
-    #theVertex_tracks = TrigEFIDSequence("Bjet","bjet","InsideOut").getSequence()        
+    # NEW TRACKS-#theVertex_tracks = TrigEFIDSequence("Bjet","bjet","InsideOut").getSequence()        
 
     #--------------------
 
     # primary vertexing
-    from TrigT2HistoPrmVtx.TrigT2HistoPrmVtxAllTEConfig import EFHistoPrmVtxAllTE_Jet
-    from TrigT2HistoPrmVtx.TrigT2HistoPrmVtxComboConfig import EFHistoPrmVtxCombo_Jet
+    # NEW TRACKS-from TrigT2HistoPrmVtx.TrigT2HistoPrmVtxAllTEConfig import EFHistoPrmVtxAllTE_Jet
+    # NEW TRACKS-from TrigT2HistoPrmVtx.TrigT2HistoPrmVtxComboConfig import EFHistoPrmVtxCombo_Jet
 
-    #--------------------
+    # NEW TRACKS-#--------------------
 
-    # secondary vertexing
-    from InDetTrigVxSecondary.InDetTrigVxSecondary_LoadTools import TrigVxSecondaryCombo_EF
-    theVxSecondary = TrigVxSecondaryCombo_EF()
+    # NEW TRACKS-# secondary vertexing
+    # NEW TRACKS-from InDetTrigVxSecondary.InDetTrigVxSecondary_LoadTools import TrigVxSecondaryCombo_EF
+    # NEW TRACKS-theVxSecondary = TrigVxSecondaryCombo_EF()
     # ---> TESTING FIXME
     #--- Redoing the Vx
-    from AthenaCommon.AppMgr import ToolSvc
-    from InDetVKalVxInJetTool.InDetVKalVxInJetToolConf import InDet__InDetVKalVxInJetTool
-    theVxSecondary.SecVtxFinderList = []
-    InDetVKalVxInJetTool_v2 = InDet__InDetVKalVxInJetTool(name = "InDetEFVKalVxInJetTool_v2",
-            getNegativeTail = False,
-            CutChi2         = 999999,
-            CutSctHits      = 0, 
-            CutPixelHits    = 0,
-            CutSiHits       = 0, #was 4
-            CutBLayHits     = 0,
-            CutSharedHits   = 0,#2,
-            FillHist        = True,
-            CutPt           = 0.5*GeV,
-            CutA0           = 100*mm,
-            CutZVrt         = 1500*mm,
-            MultiVertex     = True,
-            MultiWithPrimary= True,
-            #MultiWithOneTrkVrt=True,
-            VertexMergeCut  = 4.0*mm,
-            #OutputLevel      = DEBUG
-            )
-    ToolSvc += InDetVKalVxInJetTool_v2
-    theVxSecondary.SecVtxFinderList += [ InDetVKalVxInJetTool_v2 ]
+    # NEW TRACKS-from AthenaCommon.AppMgr import ToolSvc
+    # NEW TRACKS-from InDetVKalVxInJetTool.InDetVKalVxInJetToolConf import InDet__InDetVKalVxInJetTool
+    # NEW TRACKS-theVxSecondary.SecVtxFinderList = []
+    # NEW TRACKS-InDetVKalVxInJetTool_v2 = InDet__InDetVKalVxInJetTool(name = "InDetEFVKalVxInJetTool_v2",
+    # NEW TRACKS-        getNegativeTail = False,
+    # NEW TRACKS-        CutChi2         = 999999,
+    # NEW TRACKS-        CutSctHits      = 0, 
+    # NEW TRACKS-        CutPixelHits    = 0,
+    # NEW TRACKS-        CutSiHits       = 0, #was 4
+    # NEW TRACKS-        CutBLayHits     = 0,
+    # NEW TRACKS-        CutSharedHits   = 0,#2,
+    # NEW TRACKS-        FillHist        = True,
+    # NEW TRACKS-        CutPt           = 0.5*GeV,
+    # NEW TRACKS-        CutA0           = 100*mm,
+    # NEW TRACKS-        CutZVrt         = 1500*mm,
+    # NEW TRACKS-        MultiVertex     = True,
+    # NEW TRACKS-        MultiWithPrimary= True,
+    # NEW TRACKS-        #MultiWithOneTrkVrt=True,
+    # NEW TRACKS-        VertexMergeCut  = 4.0*mm,
+    # NEW TRACKS-        #OutputLevel      = DEBUG
+    # NEW TRACKS-        )
+    # NEW TRACKS-ToolSvc += InDetVKalVxInJetTool_v2
+    # NEW TRACKS-theVxSecondary.SecVtxFinderList += [ InDetVKalVxInJetTool_v2 ]
     #theVxSecondary.SecVtxFinderList[0].FillHist=True
     #theVxSecondary.SecVtxFinderList[0].FillHist=True
     #theVxSecondary.SecVtxFinderList[0].CutPixelHits=0
@@ -414,14 +414,14 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     theChainDef.addSequence(theJetSplit,    jetHypoTE,  jetSplitTE)
     theChainDef.addSequence(theBjet_tracks, jetSplitTE, jetTrackTE)
 
-    theChainDef.addSequence(theSuperRoi,      inputTEsEF, superTE)
-    theChainDef.addSequence(theVertex_tracks, superTE,    superTrackingTE)
+    #theChainDef.addSequence(theSuperRoi,      inputTEsEF, superTE)
+    #theChainDef.addSequence(theVertex_tracks, superTE,    superTrackingTE)
 
-    theChainDef.addSequence([EFHistoPrmVtxAllTE_Jet()], superTrackingTE, prmVertexTE)
-    theChainDef.addSequence([EFHistoPrmVtxCombo_Jet()], [superTrackingTE,prmVertexTE], comboPrmVtxTE)    
-    theChainDef.addSequence(theVxSecondary, [jetTrackTE, comboPrmVtxTE], secVtxTE)
-    theChainDef.addSequence([theDvFex, theDvHypo], secVtxTE, lastTEout)#--> HASTA AQUI --->
-    #theChainDef.addSequence([theDvFex, theDvHypo], jetTrackTE, lastTEout)
+    #theChainDef.addSequence([EFHistoPrmVtxAllTE_Jet()], superTrackingTE, prmVertexTE)
+    #theChainDef.addSequence([EFHistoPrmVtxCombo_Jet()], [superTrackingTE,prmVertexTE], comboPrmVtxTE)    
+    #theChainDef.addSequence(theVxSecondary, [jetTrackTE, comboPrmVtxTE], secVtxTE)
+    #theChainDef.addSequence([theDvFex, theDvHypo], secVtxTE, lastTEout)#--> HASTA AQUI --->
+    theChainDef.addSequence([theDvFex, theDvHypo], jetTrackTE, lastTEout)
     theChainDef.addSignature(theChainDef.signatureList[-1]['signature_counter']+1, [lastTEout]*int(btagmult))
 
     return theChainDef
