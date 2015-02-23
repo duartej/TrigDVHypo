@@ -55,7 +55,14 @@ class TrigBjetJetInfo;
  * @author Jordi Duarte-Campderros <jorge.duarte.campderros@cern.ch>
  *
  * This is the base feature extraction class for the HLT DV-searches triggers. 
- * It computes relevant quantities based on track impact parameters and secondary vertices, creates a 
+ * The trigger strategy is based in the RoI-level reconstruction of the tracks.
+ * Each RoI (L1 jet) defines a eta+-DeltaEta and phi+-DeltaPhi which is used to look 
+ * after seeds at the Si (Pixel and SCT) and/or TRT detectors. The seeds obtained in
+ * that RoI are used to reconstruct tracks compatibles with the RoI eta and phi (i.e. 
+ * the tracks pass through this eta+-deltaEta,phi+-deltaPhi).
+ *
+ * --- TO BE DELETED: NEEDS TO DECIDE WHICH QUANTITES TO STORED ---
+ * The Fex computes relevant quantities based on track impact pa and secondary vertices, creates a 
  * modified Bjet object and attaches it to TE. Note that the Bjet created stores the decay length instead
  * of the significance of the decay length. Also, the Primary Vertex (with higher sum_{tracks}pT^2) and
  * the secondary vertices found in the event are filled in the Bjet object
