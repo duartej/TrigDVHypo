@@ -37,9 +37,6 @@ class DvFex(TrigDvFex):
         if instance=="EF" :
             self.Instance = "EF"
         
-        self.UseBeamSpotFlag    = False
-        self.SetBeamSpotWidth   = 1.0*mm
-        
         self.UseEtaPhiTrackSel  = False
         
         if algo=="EFID" :
