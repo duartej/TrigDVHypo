@@ -17,7 +17,6 @@
 #include "TrigInterfaces/FexAlgo.h"
 #include "TrigTrackJetFinderTool/ITrigTrackJetFinderTool.h"
 //#include "TrigSteeringEvent/Enums.h"
-#include "VxSecVertex/VxSecVertexInfo.h"
 
 #include "TrigBjetHypo/TrigBjetDataHelper.h"
 
@@ -45,7 +44,6 @@ class TrigEFBjetContainer;
 class TaggerHelper;
 class TrigBjetTrackInfo;
 class TrigBjetPrmVtxInfo;
-class TrigBjetSecVtxInfo;
 class TrigBjetJetInfo;
 
 /**
@@ -96,10 +94,6 @@ class TrigDvFex: public HLT::FexAlgo
        /** @brief To retrieve primary vertex collections reconstructed and stored in xAOD::VertexContainer. */
         HLT::ErrorCode getPrmVtxCollection(const xAOD::VertexContainer*&, const HLT::TriggerElement*,
                 const std::string&);
-        /** @brief To retrieve secondary vertex collections reconstructed and stored in Trk::VxSecVertexInfoContainer. */
-        HLT::ErrorCode getSecVtxCollection(const Trk::VxSecVertexInfoContainer*&, const HLT::TriggerElement*);
-        /** @brief To set the datamember related with the EF secondary vertex information. */
-        HLT::ErrorCode setSecVtxInfo(const Trk::VxSecVertexInfoContainer*&, const xAOD::Vertex*&);
         /** @brief Retrieved the xAOD::Jet collection attached to the TE. */
         HLT::ErrorCode getJet(const xAOD::Jet * &,const HLT::TriggerElement*);
         /** @brief Set the beam-spot related stuff on the relevant datamembers */
@@ -118,8 +112,6 @@ class TrigDvFex: public HLT::FexAlgo
 
         /** @brief Internal EDM class for primary vertex and beam-spot information, defined in TrigBjetDataHelper. */ 
         TrigBjetPrmVtxInfo* m_trigBjetPrmVtxInfo;
-        /** @brief Internal EDM class for secondary vertex information, defined in TrigBjetDataHelper. */ 
-        TrigBjetSecVtxInfo* m_trigBjetSecVtxInfo;
         /** @brief Internal EDM class for jet direction information, defined in TrigBjetDataHelper. */ 
         TrigBjetJetInfo*    m_trigBjetJetInfo;
         /** @brief Internal EDM class for track parameter information, defined in TrigBjetDataHelper. */ 
@@ -168,18 +160,6 @@ class TrigDvFex: public HLT::FexAlgo
         //* for monitoring *//
         //////////////////////
         
-        /** @brief to monitor sv build quantities */
-        float m_mon_svMass;
-        float m_mon_svX;
-        float m_mon_svY;
-        float m_mon_svZ;
-        float m_mon_svEtrkInJet;
-        float m_mon_svR;
-        float m_mon_svL;
-        float m_mon_Efr;
-        int   m_mon_nTrk;
-        int   m_mon_n2Trk;
-
         /** @brief to monitor track selection. */
         std::vector<float> m_listCutApplied;
     
