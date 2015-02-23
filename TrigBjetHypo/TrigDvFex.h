@@ -40,7 +40,6 @@ class TrigEFBjetContainer;
 
 class TaggerHelper;
 class TrigBjetTrackInfo;
-class TrigBjetPrmVtxInfo;
 class TrigBjetJetInfo;
 
 /**
@@ -120,12 +119,6 @@ class TrigDvFex: public HLT::FexAlgo
 
         /** @brief string corresponding to the trigger level in which the algorithm is running. */
         std::string m_instance;
-
-        /** @brief to check the beam spot flag status and start track selection accordingly. */
-        bool m_useBeamSpotFlag;
-        /** @brief to set the maximum beam spot width to enable the selection. */
-        float m_setBeamSpotWidth;
-
 
         /** @brief lower bound of the chi square of the reconstructed track (to perform track selection). */
         float m_trkSelChi2;

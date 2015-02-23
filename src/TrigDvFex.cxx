@@ -21,7 +21,6 @@
 
 #include "TrigSteeringEvent/TrigOperationalInfo.h"
 
-#include "InDetBeamSpotService/IBeamCondSvc.h"
 
 #include "xAODJet/Jet.h"
 #include "xAODJet/JetContainer.h"
@@ -47,9 +46,6 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareProperty ("onlinemon",          m_mon_online = true);
   declareProperty ("validation",         m_mon_validation = true);
   
-  declareProperty ("UseBeamSpotFlag",    m_useBeamSpotFlag    = false);
-  declareProperty ("SetBeamSpotWidth",   m_setBeamSpotWidth   = 0.05);
-
   declareProperty ("HistoPrmVtxAtEF",    m_histoPrmVtxAtEF    = true);
   declareProperty ("UseEtaPhiTrackSel",  m_useEtaPhiTrackSel  = false);
   
@@ -114,9 +110,6 @@ HLT::ErrorCode TrigDvFex::hltInitialize()
     ATH_MSG_DEBUG(" AlgoId = "              << m_algo ); 
     ATH_MSG_DEBUG(" Instance = "            << m_instance );
  
-    ATH_MSG_DEBUG(" UseBeamSpotFlag = "     << m_useBeamSpotFlag ); 
-    ATH_MSG_DEBUG(" SetBeamSpotWidth = "    << m_setBeamSpotWidth );
-
     ATH_MSG_DEBUG(" HistoPrmVtxAtEF = "     << m_histoPrmVtxAtEF );
     ATH_MSG_DEBUG(" UseEtaPhiTrackSel = "   << m_useEtaPhiTrackSel );
     ATH_MSG_DEBUG(" UseJetDirection = "     << m_useJetDirection );
