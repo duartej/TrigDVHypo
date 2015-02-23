@@ -15,7 +15,6 @@
 #include "GaudiKernel/ToolHandle.h"
 
 #include "TrigInterfaces/FexAlgo.h"
-#include "TrigTrackJetFinderTool/ITrigTrackJetFinderTool.h"
 //#include "TrigSteeringEvent/Enums.h"
 
 #include "TrigBjetHypo/TrigBjetDataHelper.h"
@@ -36,8 +35,6 @@
 //class Rec::TrackParticleContainer; --> enabled by default
 
 //class Trk::VxSecVertexInfoContainer;  --> typedef in VxSecVertexInfo.h
-
-class VertexContainer;
 
 class TrigEFBjetContainer;
 
@@ -91,27 +88,18 @@ class TrigDvFex: public HLT::FexAlgo
 
         /** @brief To retrieve track collections reconstructed at EF and stored in TrackParticleContainer. */
         HLT::ErrorCode getTrackCollection(const xAOD::TrackParticleContainer*&, const HLT::TriggerElement*);
-       /** @brief To retrieve primary vertex collections reconstructed and stored in xAOD::VertexContainer. */
-        HLT::ErrorCode getPrmVtxCollection(const xAOD::VertexContainer*&, const HLT::TriggerElement*,
-                const std::string&);
         /** @brief Retrieved the xAOD::Jet collection attached to the TE. */
         HLT::ErrorCode getJet(const xAOD::Jet * &,const HLT::TriggerElement*);
-        /** @brief Set the beam-spot related stuff on the relevant datamembers */
-        HLT::ErrorCode setBeamSpotRelated();
     
         /** @brief To select EF tracks. */
         bool efTrackSel(const xAOD::TrackParticle*&, unsigned int);
     
-        /** @brief TrigTrackJetFinder tool. */
-        ToolHandle<ITrigTrackJetFinderTool> m_trackJetFinderTool;
         /** @brief Pointer to TrigEFBjet collection. */
         TrigEFBjetContainer* m_trigEFBjetColl;
     
         /** @brief Pointer to TaggerHelper class. */ 
         TaggerHelper* m_taggerHelper;
 
-        /** @brief Internal EDM class for primary vertex and beam-spot information, defined in TrigBjetDataHelper. */ 
-        TrigBjetPrmVtxInfo* m_trigBjetPrmVtxInfo;
         /** @brief Internal EDM class for jet direction information, defined in TrigBjetDataHelper. */ 
         TrigBjetJetInfo*    m_trigBjetJetInfo;
         /** @brief Internal EDM class for track parameter information, defined in TrigBjetDataHelper. */ 
