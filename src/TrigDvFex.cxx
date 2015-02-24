@@ -108,12 +108,8 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareMonitoredStdContainer("roi_stepsToSelect", m_listCutApplied, AutoClear);
   declareMonitoredObject      ("roi_selectedTracks", *this, &TrigDvFex::totSelectedTracks);
 
-  declareMonitoredVariable    ("roi_deltaEtaJet",       m_deltaEtaJet,       AutoClear);
-  declareMonitoredVariable    ("roi_deltaPhiJet",       m_deltaPhiJet,       AutoClear);
-  declareMonitoredVariable    ("roi_deltaEtaTrkJet",    m_deltaEtaTrkJet,    AutoClear);
-  declareMonitoredVariable    ("roi_deltaPhiTrkJet",    m_deltaPhiTrkJet,    AutoClear);
-  declareMonitoredVariable    ("roi_deltaEtaJetTrkJet", m_deltaEtaJetTrkJet, AutoClear);
-  declareMonitoredVariable    ("roi_deltaPhiJetTrkJet", m_deltaPhiJetTrkJet, AutoClear);
+  declareMonitoredVariable    ("roi_deltaEtaTrk",    m_deltaEtaTrk,    AutoClear);
+  declareMonitoredVariable    ("roi_deltaPhiTrk",    m_deltaPhiTrk,    AutoClear);
 
   m_taggerHelper = new TaggerHelper(msg(), msgLvl());
 }
@@ -164,8 +160,6 @@ HLT::ErrorCode TrigDvFex::hltInitialize()
 
 
 //** ----------------------------------------------------------------------------------------------------------------- **//
-
-
 HLT::ErrorCode TrigDvFex::getTrackCollection(const xAOD::TrackParticleContainer*& pointerToEFTrackCollections,
                  const HLT::TriggerElement* whateverTE)
 {
@@ -230,7 +224,7 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     
     const int   nSiHits = nPixHits + nSCTHits;
     const float theta   = track->theta();
-    const float phi     = track->phi();
+    const float phi     = m_taggerHelper->phiCorr(track->phi());
     const float eta     = track->eta();
     const float qOverPt = track->qOverP()/TMath::Sin(theta); 
    //onst float pT      = (1.0/qOverPt);
@@ -359,8 +353,12 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
         m_mon_trkSel_PixSharedHits.push_back((int)nPixSharedHits);
         m_mon_trkSel_SCTSharedHits.push_back((int)nSCTSharedHits);
         //m_mon_trkSel_TRTSharedHits.push_back((int)nTRTSharedHits);
-    }
-    
+        
+        // RoI related
+        m_deltaEtaTrk = m_etaRoI-eta;
+        m_deltaPhiTrk = m_taggerHelper->phiCorr(m_phiRoI-phi);
+    }   
+
     if(m_mon_validation || m_mon_online)
     {
         m_mon_trk_a0_sel.push_back(d0/CLHEP::mm);
@@ -479,6 +477,8 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     ATH_MSG_DEBUG("Executing TrigDvFex");
 
     // Clear and initialize data members
+    m_etaRoI = -999;
+    m_phiRoI = -999;
     m_totSelTracks = 0;
     m_totTracks    = 0;
     m_setPVInfo    = false;
@@ -494,8 +494,10 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
         ATH_MSG_DEBUG("No feature for this Trigger Element");    	
     	return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
     }
+    m_etaRoI = roiDescriptor->eta();
+    m_phiRoI = roiDescriptor->phi();
     ATH_MSG_DEBUG("Using TE: " << "RoI id " << roiDescriptor->roiId()
-	    << ", Phi = " <<  roiDescriptor->phi() << ", Eta = " << roiDescriptor->eta());
+	    << ", Phi = " <<  m_phiRoI << ", Eta = " << m_etaRoI);
     
     // -----------------------------------
     // Get Track collection 

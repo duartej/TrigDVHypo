@@ -24,21 +24,11 @@ class TrigDvFexMonitoring(TrigGenericMonitoringToolConfig):
             title="Selected tracks per RoI (in percentage). Note that -1 means no "\
                     "tracks found in the RoI",xbins=20, xmin=-0.2, xmax=1.1) ]
     
-        self.Histograms += [ defineHistogram('roi_deltaEtaJet', type='TH1F', 
-                title="Delta eta between the LVL1 jet RoI and the HLT jet",xbins=40, xmin=-1.0, xmax=1.0) ]
-        self.Histograms += [ defineHistogram('roi_deltaPhiJet', type='TH1F', 
-                title="Delta phi between the LVL1 jet RoI and the HLT jet",xbins=40, xmin=-1.0, xmax=1.0) ]
-        self.Histograms += [ defineHistogram('roi_deltaEtaTrkJet', type='TH1F', 
-        title="Delta eta between the LVL1 jet RoI and the HLT track-jet",xbins=40, xmin=-1.0, xmax=1.0) ]
-        self.Histograms += [ defineHistogram('roi_deltaPhiTrkJet', type='TH1F',
-            title="Delta phi between the LVL1 jet RoI and the HLT track-jet",xbins=40, xmin=-1.0, xmax=1.0) ]
-        self.Histograms += [ defineHistogram('roi_deltaEtaJetTrkJet', type='TH1F',
-            title="Delta eta between the HLT jet and the HLT track-jet",xbins=40, xmin=-1.0, xmax=1.0) ]
-        self.Histograms += [ defineHistogram('roi_deltaPhiJetTrkJet', type='TH1F',
-            title="Delta phi between the HLT jet and the HLT track-jet",xbins=40, xmin=-1.0, xmax=1.0) ]
-
-
-
+        self.Histograms += [ defineHistogram('roi_deltaEtaTrk', type='TH1F',
+            title="Delta eta between the RoI and the HLT track-jet",xbins=100, xmin=-1.0, xmax=1.0) ]
+        self.Histograms += [ defineHistogram('roi_deltaPhiTrk', type='TH1F',
+            title="Delta phi between the RoI and the HLT track-jet",xbins=100, xmin=-1.0, xmax=1.0) ]
+        
 class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
     def __init__ (self, name="TrigEFDvFexValidationMonitoring"):
         super(TrigEFDvFexValidationMonitoring, self).__init__(name)
@@ -55,7 +45,7 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
         self.Histograms += [ defineHistogram('trk_theta', type='TH1F', 
                 title="#theta of the tracks at the perigee;#theta",xbins=100, xmin=0.0, xmax=3.1415) ]
         self.Histograms += [ defineHistogram('trk_pt', type='TH1F', 
-                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=300, xmin=0.0, xmax=500.0) ]
+                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=300, xmin=0.0, xmax=100.0) ]
         self.Histograms += [ defineHistogram('trk_eta', type='TH1F', 
                 title="#eta of the tracks at the perigee;#eta",xbins=100, xmin=-4.5, xmax=4.5) ]
         
@@ -79,13 +69,13 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
                 title="Number of pixel hits used by more than one track",xbins=11, xmin=-0.5, xmax=10) ]
         self.Histograms += [ defineHistogram('trk_SCTSharedHits', type='TH1I', 
                 title="Number of SCT hits used by more than one track",xbins=16, xmin=-0.5, xmax=15) ]
-        self.Histograms += [ defineHistogram('trk_TRTSharedHits', type='TH1I', 
-                title="Number of TRT hits used by more than one track",xbins=51, xmin=-0.5, xmax=50) ]
+        #self.Histograms += [ defineHistogram('trk_TRTSharedHits', type='TH1I', 
+        #        title="Number of TRT hits used by more than one track",xbins=51, xmin=-0.5, xmax=50) ]
         
         self.Histograms += [ defineHistogram('trkSel_theta', type='TH1F', 
                 title="#theta of the tracks at the perigee;#theta",xbins=100, xmin=0.0, xmax=3.1415) ]
         self.Histograms += [ defineHistogram('trkSel_pt', type='TH1F', 
-                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=300, xmin=0.0, xmax=500.0) ]
+                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=300, xmin=0.0, xmax=100.0) ]
         self.Histograms += [ defineHistogram('trkSel_eta', type='TH1F', 
                 title="#eta of the tracks at the perigee;#eta",xbins=100, xmin=-4.5, xmax=4.5) ]
         
@@ -109,13 +99,21 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
                 title="Number of pixel hits used by more than one track",xbins=11, xmin=-0.5, xmax=10) ]
         self.Histograms += [ defineHistogram('trkSel_SCTSharedHits', type='TH1I', 
                 title="Number of SCT hits used by more than one track",xbins=16, xmin=-0.5, xmax=15) ]
-        self.Histograms += [ defineHistogram('trkSel_TRTSharedHits', type='TH1I', 
-                title="Number of TRT hits used by more than one track",xbins=51, xmin=-0.5, xmax=50) ]
+        #self.Histograms += [ defineHistogram('trkSel_TRTSharedHits', type='TH1I', 
+        #        title="Number of TRT hits used by more than one track",xbins=51, xmin=-0.5, xmax=50) ]
 
         self.Histograms += [ defineHistogram('roi_stepsToSelect',
             type='TH1F', title="Steps to select tracks",xbins=12, xmin=0.0, xmax=12,
             labels='BS flag status:BS width:eta matching:phi matching:pT cut:d0 cut:z0'+
             ' cut:b-layer hit cut:pixel hit cut:silicon hit cut:chi2 cut:selected') ]
+        
+        self.Histograms += [ defineHistogram('roi_deltaEtaTrk,roi_deltaPhiTrk',
+                                              type='TH2F',
+                                              title="#Delta#eta vs. #Delta#phi between the RoI and the HLT-track",
+                                              xbins=100,xmin=-1.0,xmax=1.0,
+                                              ybins=100,ymin=-1.0,ymax=1.0)
+                                              ]
+
 
 
 

@@ -172,23 +172,21 @@ class TrigDvFex: public HLT::FexAlgo
                 return (float)m_totSelTracks/(float)m_totTracks;
             }
         };
+
+        /** @brief Eta of the RoI */
+        float m_etaRoI;
+        /** @brief RoI phi */
+        float m_phiRoI;
+
         /** @brief Number of reconstructed tracks per RoI. */
         float m_totTracks;
         /** @brief Number of selected tracks per RoI. */
         float m_totSelTracks;
 
-        /** @brief Delta eta between the LVL1 jet RoI and the EF jet. */
-        float m_deltaEtaJet;
-        /** @brief Delta phi between the LVL1 jet RoI and the EF jet. */
-        float m_deltaPhiJet;
         /** @brief Delta eta between the LVL1 jet RoI and the EF track-jet. */
-        float m_deltaEtaTrkJet;
+        float m_deltaEtaTrk;
         /** @brief Delta phi between the LVL1 jet RoI and the EF track-jet. */
-        float m_deltaPhiTrkJet;
-        /** @brief Delta eta between the EF jet and the EF track-jet. */
-        float m_deltaEtaJetTrkJet;
-        /** @brief Delta phi between the EF jet and the EF track-jet. */
-        float m_deltaPhiJetTrkJet;
+        float m_deltaPhiTrk;
 };
 
 #endif
