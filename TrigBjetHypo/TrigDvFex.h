@@ -146,8 +146,19 @@ class TrigDvFex: public HLT::FexAlgo
     
         /** @brief to monitor track quantities and effect ot the selection. */
         std::vector<float> m_mon_trk_a0, m_mon_trk_a0_sel, m_mon_trk_Sa0_sel;
-        std::vector<float> m_mon_trk_z0, m_mon_trk_z0_sel, m_mon_trk_z0_sel_PV, m_mon_trk_Sz0_sel;
+        std::vector<float> m_mon_trk_z0, m_mon_trk_z0_sel, m_mon_trk_Sz0_sel;
         std::vector<float> m_mon_trk_prob;
+        std::vector<float> m_mon_trk_theta, m_mon_trk_pt, m_mon_trk_eta;
+        std::vector<float> m_mon_trkSel_theta, m_mon_trkSel_pt, m_mon_trkSel_eta;
+        /** @brief quality track */
+        std::vector<int> m_mon_trk_BlayerHits, m_mon_trk_PixHits, m_mon_trk_SCTHits, m_mon_trk_TRTHits;
+        std::vector<int> m_mon_trk_PixHoles, m_mon_trk_SCTHoles, m_mon_trk_TRTHoles;
+        std::vector<int> m_mon_trk_PixSharedHits, m_mon_trk_SCTSharedHits;//, m_mon_trk_TRTSharedHits;
+        /** @brief quality track passing d0 cut */
+        std::vector<int> m_mon_trkSel_BlayerHits, m_mon_trkSel_PixHits, m_mon_trkSel_SCTHits, m_mon_trkSel_TRTHits;
+        std::vector<int> m_mon_trkSel_PixHoles, m_mon_trkSel_SCTHoles, m_mon_trkSel_TRTHoles;
+        std::vector<int> m_mon_trkSel_PixSharedHits, m_mon_trkSel_SCTSharedHits;//, m_mon_trkSel_TRTSharedHits;
+
     
         /** @brief To retrieve selected tracks in percentage. */ 
         inline float totSelectedTracks() const 

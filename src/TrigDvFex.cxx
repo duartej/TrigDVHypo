@@ -30,6 +30,8 @@
 
 //** ---------------------------------------------------------------------- **//
 const double TOLERANCE=1e-30;
+const double PI = 3.14159265358979323846264338327950288;
+const double HALF_PI = PI/2.0;
 
 TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   HLT::FexAlgo(name, pSvcLocator),
@@ -64,9 +66,42 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareMonitoredStdContainer("trk_S(a0)_sel",     m_mon_trk_Sa0_sel,   AutoClear);
   declareMonitoredStdContainer("trk_z0",            m_mon_trk_z0,        AutoClear);
   declareMonitoredStdContainer("trk_z0_sel",        m_mon_trk_z0_sel,    AutoClear);
-  declareMonitoredStdContainer("trk_z0_sel_PV",     m_mon_trk_z0_sel_PV, AutoClear);
   declareMonitoredStdContainer("trk_S(z0)_sel",     m_mon_trk_Sz0_sel,   AutoClear);
   declareMonitoredStdContainer("trk_prob",          m_mon_trk_prob,      AutoClear);
+
+  declareMonitoredStdContainer("trk_theta",         m_mon_trk_theta,     AutoClear);
+  declareMonitoredStdContainer("trk_pt",            m_mon_trk_eta,       AutoClear);
+  declareMonitoredStdContainer("trk_eta",           m_mon_trk_eta,       AutoClear);
+
+  declareMonitoredStdContainer("trk_BlayerHits",    m_mon_trk_BlayerHits,AutoClear);
+  declareMonitoredStdContainer("trk_PixHits",       m_mon_trk_PixHits,   AutoClear);
+  declareMonitoredStdContainer("trk_SCTHits",       m_mon_trk_SCTHits,   AutoClear);
+  declareMonitoredStdContainer("trk_TRTHits",       m_mon_trk_TRTHits,   AutoClear);
+  
+  declareMonitoredStdContainer("trk_PixHoles",      m_mon_trk_PixHoles,  AutoClear);
+  declareMonitoredStdContainer("trk_SCTHoles",      m_mon_trk_SCTHoles,  AutoClear);
+  declareMonitoredStdContainer("trk_TRTHoles",      m_mon_trk_TRTHoles,  AutoClear);
+  
+  declareMonitoredStdContainer("trk_PixSharedHits", m_mon_trk_PixSharedHits,   AutoClear);
+  declareMonitoredStdContainer("trk_SCTSharedHits", m_mon_trk_SCTSharedHits,   AutoClear);
+  //declareMonitoredStdContainer("trk_TRTSharedHits", m_mon_trk_TRTSharedHits,   AutoClear);
+  
+  declareMonitoredStdContainer("trkSel_theta",      m_mon_trkSel_theta,     AutoClear);
+  declareMonitoredStdContainer("trkSel_pt",         m_mon_trkSel_eta,       AutoClear);
+  declareMonitoredStdContainer("trkSel_eta",        m_mon_trkSel_eta,       AutoClear);
+
+  declareMonitoredStdContainer("trkSel_BlayerHits", m_mon_trkSel_BlayerHits,AutoClear);
+  declareMonitoredStdContainer("trkSel_PixHits",    m_mon_trkSel_PixHits,   AutoClear);
+  declareMonitoredStdContainer("trkSel_SCTHits",    m_mon_trkSel_SCTHits,   AutoClear);
+  declareMonitoredStdContainer("trkSel_TRTHits",    m_mon_trkSel_TRTHits,   AutoClear);
+  
+  declareMonitoredStdContainer("trkSel_PixHoles",   m_mon_trkSel_PixHoles,  AutoClear);
+  declareMonitoredStdContainer("trkSel_SCTHoles",   m_mon_trkSel_SCTHoles,  AutoClear);
+  declareMonitoredStdContainer("trkSel_TRTHoles",   m_mon_trkSel_TRTHoles,  AutoClear);
+  
+  declareMonitoredStdContainer("trkSel_PixSharedHits", m_mon_trkSel_PixSharedHits,   AutoClear);
+  declareMonitoredStdContainer("trkSel_SCTSharedHits", m_mon_trkSel_SCTSharedHits,   AutoClear);
+  //declareMonitoredStdContainer("trkSel_TRTSharedHits", m_mon_trkSel_TRTSharedHits,   AutoClear);
 
   declareMonitoredVariable    ("roi_nTracks",       m_totTracks);
   declareMonitoredVariable    ("roi_nTracks_sel",   m_totSelTracks);
@@ -168,29 +203,74 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     uint8_t nBlayerHits = 0;
     uint8_t nPixHits    = 0;  
     uint8_t nSCTHits    = 0; 
-  
+    
     track->summaryValue(nBlayerHits, xAOD::numberOfBLayerHits);
     track->summaryValue(nPixHits,    xAOD::numberOfPixelHits);
     track->summaryValue(nSCTHits,    xAOD::numberOfSCTHits);
     
-    int   nSiHits = nPixHits + nSCTHits;
-    float theta   = track->theta();
-    float qOverPt = track->qOverP()/TMath::Sin(theta); 
-    float pT      = (1.0/qOverPt);
-    float d0      = track->d0();
-    float z0      = track->z0();
+    // New
+    uint8_t nPixHoles     = 0;
+    uint8_t nPixSharedHits= 0;
+    track->summaryValue(nPixHoles,      xAOD::numberOfPixelHoles);
+    track->summaryValue(nPixSharedHits, xAOD::numberOfPixelSharedHits);
+
+    uint8_t nSCTHoles     = 0;
+    uint8_t nSCTSharedHits= 0;
+    track->summaryValue(nSCTHoles,      xAOD::numberOfSCTHoles);
+    track->summaryValue(nSCTSharedHits, xAOD::numberOfSCTSharedHits);
+
+    uint8_t nTRTHits      = 0;
+    uint8_t nTRTHoles     = 0;
+    //uint8_t nTRTSharedHits= 0;
+    track->summaryValue(nTRTHits,       xAOD::numberOfTRTHits);
+    track->summaryValue(nTRTHoles,      xAOD::numberOfTRTHoles);
+    //track->summaryValue(nTRTSharedHits, xAOD::numberOfTRTSharedHits);
+
+  
+    
+    const int   nSiHits = nPixHits + nSCTHits;
+    const float theta   = track->theta();
+    const float phi     = track->phi();
+    const float eta     = track->eta();
+    const float qOverPt = track->qOverP()/TMath::Sin(theta); 
+   //onst float pT      = (1.0/qOverPt);
+    const float pT      = track->pt();
+    const float d0      = track->d0();
+    const float z0      = track->z0();
 
 
     ATH_MSG_VERBOSE( "efTrackSel method\n" <<
 	    "  Track number "    << i+1  << " to be selected must be:\n" <<
-       	    "    Pt "            << fabs(pT)                      << " >= " << m_trkSelPt << "\n" <<
-       	    "    d0 "            << fabs(d0)                      << " >= " << m_trkSelD0 << "\n" <<
+       	    "    Pt [GeV]:"  << fabs(pT)/CLHEP::GeV           << " >= " << m_trkSelPt/CLHEP::GeV << "\n" <<
+       	    "    d0 [mm]:"   << fabs(d0)/CLHEP::mm            << " >= " << m_trkSelD0/CLHEP::mm << "\n" <<
 	   // "    z0*sin(theta) " << fabs(z0-zv)*TMath::Sin(theta) << " <= " << m_trkSelZ0 << "\n" <<
        	    "    bLayer "        << (int)nBlayerHits              << " >= " << m_trkSelBLayer << "\n" <<
        	    "    pixelHit "      << (int)nPixHits                 << " >= " << m_trkSelPixHits<< "\n" <<
             "    SiHit "         << (int)nSiHits                  << " >= " << m_trkSelSiHits << "\n" <<
        	    "    Prob(chi2) "    << TMath::Prob(track->chiSquared(), (int)nSiHits*3-5) << " > " << m_trkSelChi2);
-  
+    
+    // Monitoring stuff: Validation-----------------------------------------------
+    if(m_mon_validation)
+    {
+        m_mon_trk_a0.push_back(d0/CLHEP::mm);
+        m_mon_trk_z0.push_back(z0/CLHEP::mm);
+        m_mon_trk_theta.push_back(theta);
+        m_mon_trk_pt.push_back(pT/CLHEP::GeV);
+        m_mon_trk_eta.push_back(eta);
+
+        // Quality
+        m_mon_trk_BlayerHits.push_back((int)nBlayerHits);
+        m_mon_trk_PixHits.push_back((int)nPixHits);
+        m_mon_trk_SCTHits.push_back((int)nSCTHits);
+        m_mon_trk_TRTHits.push_back((int)nTRTHits);
+        m_mon_trk_PixHoles.push_back((int)nPixHoles);
+        m_mon_trk_SCTHoles.push_back((int)nSCTHoles);
+        m_mon_trk_TRTHoles.push_back((int)nTRTHoles);
+        m_mon_trk_PixSharedHits.push_back((int)nPixSharedHits);
+        m_mon_trk_SCTSharedHits.push_back((int)nSCTSharedHits);
+        //m_mon_trk_TRTSharedHits.push_back((int)nTRTSharedHits);
+    }
+        
     if(m_useEtaPhiTrackSel) 
     {
     	if(fabs(track->eta() - m_trigBjetJetInfo->etaRoI()) > 0.2) 
@@ -260,12 +340,31 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     ATH_MSG_DEBUG("    track " << i+1 << " is selected");
    
     m_listCutApplied.push_back(CutListMonitor::SELECTED);
+    
     // Monitoring stuff -------------------------------------------------
+    if(m_mon_validation )
+    {
+        m_mon_trkSel_theta.push_back(theta);
+        m_mon_trkSel_pt.push_back(pT/CLHEP::GeV);
+        m_mon_trkSel_eta.push_back(eta);
+
+        // Quality
+        m_mon_trkSel_BlayerHits.push_back((int)nBlayerHits);
+        m_mon_trkSel_PixHits.push_back((int)nPixHits);
+        m_mon_trkSel_SCTHits.push_back((int)nSCTHits);
+        m_mon_trkSel_TRTHits.push_back((int)nTRTHits);
+        m_mon_trkSel_PixHoles.push_back((int)nPixHoles);
+        m_mon_trkSel_SCTHoles.push_back((int)nSCTHoles);
+        m_mon_trkSel_TRTHoles.push_back((int)nTRTHoles);
+        m_mon_trkSel_PixSharedHits.push_back((int)nPixSharedHits);
+        m_mon_trkSel_SCTSharedHits.push_back((int)nSCTSharedHits);
+        //m_mon_trkSel_TRTSharedHits.push_back((int)nTRTSharedHits);
+    }
+    
     if(m_mon_validation || m_mon_online)
     {
-        m_mon_trk_a0_sel.push_back(track->d0());
-        m_mon_trk_z0_sel.push_back(track->z0());
-        m_mon_trk_z0_sel_PV.push_back(track->z0());//-m_trigBjetPrmVtxInfo->zPrmVtx());
+        m_mon_trk_a0_sel.push_back(d0/CLHEP::mm);
+        m_mon_trk_z0_sel.push_back(z0/CLHEP::mm);
         
         // ez0
 	    const float errIP1D = Amg::error(track->definingParametersCovMatrix(),1);
@@ -418,12 +517,6 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
         for(unsigned int j = 0; j < m_totTracks; ++j) 
         {
             const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
-            if(m_mon_validation)
-            {
-                m_mon_trk_a0.push_back(track->d0());
-                m_mon_trk_z0.push_back(track->z0());
-            }
-        
             if(efTrackSel(track, j)) 
             {
                 m_totSelTracks++;
