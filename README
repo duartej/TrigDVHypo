@@ -1,28 +1,14 @@
-# TODO
- * Monitoring Fex:
-   - Check how to store/declare an TH2F histogram and their associated variables
-     The approach used now (std::vector) doesn't work (for XY SV positions)
-   - Should I incorporate more monitoring variables?
-     - Number of PV
-     - PV position
-     - Jet energy
-     - Track related variables (up to now tracks is not used)
-     - RoI related ?
-   - Decide which variables goes to Validation and which ones to Online targets.
- * Fex:
-   - Decided if tracks play a role (so far they're not used)
-   - Clean
-   - Check the returned values, warnings and errors
-   - Optimization of SV: 
-         * Is it ok the current sequence of algorithms (see generateDvChainDefs)?
-         * is there room to change some values in the algorithmm in charge of 
-         creating the tracks which are going to be used to find SV? Investigating
-         which algorithm is that. Identified the sequence (therVertex_tracks, so
-         it should be one of the algorithms of the chain: 
-https://svnweb.cern.ch/trac/atlasoff/browser/InnerDetector/InDetExample/InDetTrigRecExample/tags/InDetTrigRecExample-00-11-29/python/EFInDetConfig.py
-         * OR I think I localized the cuts in the theVxSecondary, at least combined with 
-         the ones above, for instance change the CutBLayHits from 1 to 0, CutSiHits from 7 to 4?,... 
-         (InDetTrigVxSecondary.InDetTrigVxSecondary_LoadTools package)
- * Hypo
-   - Should I investigate other cutting variables? d0, ..
+# TrigDVHypo: displaced-vertex dedicated HLT trigger package 
+#             integrated within the Athena framework (ATLAS 
+#             software).
+#             The code mainly contains a FEX (feature extraction 
+#             algorithm), a Hypo (Hypothesis algorithm) and the
+#             configuration python files needed to properly load
+#             the trigger chain.
+#
+#             The trigger decision is obtained by reconstructing
+#             the tracks seeded by each RoI (not Full-Scan) and 
+#             cutting in the properties that defines a displaced
+#             vertex track (high-d0, max number of Silicon hits,...)
+#
 
