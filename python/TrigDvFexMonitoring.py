@@ -45,7 +45,7 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
         self.Histograms += [ defineHistogram('trk_pt', type='TH1F', 
                 title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=200, xmin=0.0, xmax=10.0) ]
         self.Histograms += [ defineHistogram('trk_eta', type='TH1F', 
-                title="#eta of the tracks at the perigee;#eta",xbins=100, xmin=-4.5, xmax=4.5) ]
+                title="#eta of the tracks at the perigee;#eta",xbins=100, xmin=-2.6, xmax=2.6) ]
         
         self.Histograms += [ defineHistogram('trk_BlayerHits', type='TH1I', 
                 title="Tracks hits at the B-layer (first pixel layer)",xbins=11, xmin=-0.5, xmax=10) ]
