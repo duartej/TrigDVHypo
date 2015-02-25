@@ -72,34 +72,34 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
         #self.Histograms += [ defineHistogram('trk_TRTSharedHits', type='TH1I', 
         #        title="Number of TRT hits used by more than one track",xbins=51, xmin=-0.5, xmax=50) ]
         
-        self.Histograms += [ defineHistogram('trkSel_theta', type='TH1F', 
+        self.Histograms += [ defineHistogram('trk_theta_sel', type='TH1F', 
                 title="#theta of the tracks at the perigee;#theta",xbins=100, xmin=0.0, xmax=3.1415) ]
-        self.Histograms += [ defineHistogram('trkSel_pt', type='TH1F', 
+        self.Histograms += [ defineHistogram('trk_pt_sel', type='TH1F', 
                 title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=300, xmin=0.0, xmax=100.0) ]
-        self.Histograms += [ defineHistogram('trkSel_eta', type='TH1F', 
+        self.Histograms += [ defineHistogram('trk_eta_sel', type='TH1F', 
                 title="#eta of the tracks at the perigee;#eta",xbins=100, xmin=-4.5, xmax=4.5) ]
         
-        self.Histograms += [ defineHistogram('trkSel_BlayerHits', type='TH1I', 
+        self.Histograms += [ defineHistogram('trk_BlayerHits_sel', type='TH1I', 
                 title="Tracks hits at the B-layer (first pixel layer)",xbins=11, xmin=-0.5, xmax=10) ]
-        self.Histograms += [ defineHistogram('trkSel_PixHits', type='TH1I', 
+        self.Histograms += [ defineHistogram('trk_PixHits_sel', type='TH1I', 
                 title="Tracks hits at the pixel)",xbins=11, xmin=-0.5, xmax=10) ]
-        self.Histograms += [ defineHistogram('trkSel_SCTHits', type='TH1I', 
+        self.Histograms += [ defineHistogram('trk_SCTHits_sel', type='TH1I', 
                 title="Tracks hits at the SCT",xbins=16, xmin=-0.5, xmax=15) ]
-        self.Histograms += [ defineHistogram('trkSel_TRTHits', type='TH1I', 
+        self.Histograms += [ defineHistogram('trk_TRTHits_sel', type='TH1I', 
                 title="Tracks hits at the TRT",xbins=51, xmin=-0.5, xmax=50) ]
         
-        self.Histograms += [ defineHistogram('trkSel_PixHoles', type='TH1I', 
+        self.Histograms += [ defineHistogram('trk_PixHoles_sel', type='TH1I', 
                 title="Number of pixel layers with absence of hits (pixel))",xbins=11, xmin=-0.5, xmax=10) ]
-        self.Histograms += [ defineHistogram('trkSel_SCTHoles', type='TH1I', 
+        self.Histograms += [ defineHistogram('trk_SCTHoles_sel', type='TH1I', 
                 title="Number of SCT layers with absence of hits",xbins=16, xmin=-0.5, xmax=15) ]
-        self.Histograms += [ defineHistogram('trkSel_TRTHoles', type='TH1I', 
+        self.Histograms += [ defineHistogram('trk_TRTHoles_sel', type='TH1I', 
                 title="Number of TRT holes",xbins=51, xmin=-0.5, xmax=50) ]
         
-        self.Histograms += [ defineHistogram('trkSel_PixSharedHits', type='TH1I', 
+        self.Histograms += [ defineHistogram('trk_PixSharedHits_sel', type='TH1I', 
                 title="Number of pixel hits used by more than one track",xbins=11, xmin=-0.5, xmax=10) ]
-        self.Histograms += [ defineHistogram('trkSel_SCTSharedHits', type='TH1I', 
+        self.Histograms += [ defineHistogram('trk_SCTSharedHits_sel', type='TH1I', 
                 title="Number of SCT hits used by more than one track",xbins=16, xmin=-0.5, xmax=15) ]
-        #self.Histograms += [ defineHistogram('trkSel_TRTSharedHits', type='TH1I', 
+        #self.Histograms += [ defineHistogram('trk_TRTSharedHits_sel', type='TH1I', 
         #        title="Number of TRT hits used by more than one track",xbins=51, xmin=-0.5, xmax=50) ]
 
         self.Histograms += [ defineHistogram('roi_stepsToSelect',

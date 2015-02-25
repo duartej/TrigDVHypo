@@ -86,22 +86,22 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareMonitoredStdContainer("trk_SCTSharedHits", m_mon_trk_SCTSharedHits,   AutoClear);
   //declareMonitoredStdContainer("trk_TRTSharedHits", m_mon_trk_TRTSharedHits,   AutoClear);
   
-  declareMonitoredStdContainer("trkSel_theta",      m_mon_trkSel_theta,     AutoClear);
-  declareMonitoredStdContainer("trkSel_pt",         m_mon_trkSel_eta,       AutoClear);
-  declareMonitoredStdContainer("trkSel_eta",        m_mon_trkSel_eta,       AutoClear);
+  declareMonitoredStdContainer("trk_theta_sel",      m_mon_trkSel_theta,     AutoClear);
+  declareMonitoredStdContainer("trk_pt_sel",         m_mon_trkSel_eta,       AutoClear);
+  declareMonitoredStdContainer("trk_eta_sel",        m_mon_trkSel_eta,       AutoClear);
 
-  declareMonitoredStdContainer("trkSel_BlayerHits", m_mon_trkSel_BlayerHits,AutoClear);
-  declareMonitoredStdContainer("trkSel_PixHits",    m_mon_trkSel_PixHits,   AutoClear);
-  declareMonitoredStdContainer("trkSel_SCTHits",    m_mon_trkSel_SCTHits,   AutoClear);
-  declareMonitoredStdContainer("trkSel_TRTHits",    m_mon_trkSel_TRTHits,   AutoClear);
+  declareMonitoredStdContainer("trk_BlayerHits_sel", m_mon_trkSel_BlayerHits,AutoClear);
+  declareMonitoredStdContainer("trk_PixHits_sel",    m_mon_trkSel_PixHits,   AutoClear);
+  declareMonitoredStdContainer("trk_SCTHits_sel",    m_mon_trkSel_SCTHits,   AutoClear);
+  declareMonitoredStdContainer("trk_TRTHits_sel",    m_mon_trkSel_TRTHits,   AutoClear);
   
-  declareMonitoredStdContainer("trkSel_PixHoles",   m_mon_trkSel_PixHoles,  AutoClear);
-  declareMonitoredStdContainer("trkSel_SCTHoles",   m_mon_trkSel_SCTHoles,  AutoClear);
-  declareMonitoredStdContainer("trkSel_TRTHoles",   m_mon_trkSel_TRTHoles,  AutoClear);
+  declareMonitoredStdContainer("trk_PixHoles_sel",   m_mon_trkSel_PixHoles,  AutoClear);
+  declareMonitoredStdContainer("trk_SCTHoles_sel",   m_mon_trkSel_SCTHoles,  AutoClear);
+  declareMonitoredStdContainer("trk_TRTHoles_sel",   m_mon_trkSel_TRTHoles,  AutoClear);
   
-  declareMonitoredStdContainer("trkSel_PixSharedHits", m_mon_trkSel_PixSharedHits,   AutoClear);
-  declareMonitoredStdContainer("trkSel_SCTSharedHits", m_mon_trkSel_SCTSharedHits,   AutoClear);
-  //declareMonitoredStdContainer("trkSel_TRTSharedHits", m_mon_trkSel_TRTSharedHits,   AutoClear);
+  declareMonitoredStdContainer("trk_PixSharedHits_sel", m_mon_trkSel_PixSharedHits,   AutoClear);
+  declareMonitoredStdContainer("trk_SCTSharedHits_sel", m_mon_trkSel_SCTSharedHits,   AutoClear);
+  //declareMonitoredStdContainer("trk_TRTSharedHits_sel", m_mon_trkSel_TRTSharedHits,   AutoClear);
 
   declareMonitoredVariable    ("roi_nTracks",       m_totTracks);
   declareMonitoredVariable    ("roi_nTracks_sel",   m_totSelTracks);
