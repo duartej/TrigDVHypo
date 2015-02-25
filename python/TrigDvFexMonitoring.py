@@ -14,7 +14,7 @@ class TrigDvFexMonitoring(TrigGenericMonitoringToolConfig):
         self.Histograms += [ defineHistogram('trk_a0_sel', type='TH1F', 
             title="transverse IP for selected tracks;d_{0} [mm]",xbins=101, xmin=-10, xmax=10) ]
         self.Histograms += [ defineHistogram('trk_Sa0_sel', type='TH1F', 
-                title="transverse IP significance for selected tracks",xbins=401, xmin=-500.0, xmax=400.0) ]
+                title="transverse IP significance for selected tracks",xbins=401, xmin=-1500.0, xmax=1500.0) ]
         
         self.Histograms += [ defineHistogram('roi_nTracks', type='TH1F', 
                 title="Number of tracks per RoI before track selection",xbins=50, xmin=-0.5, xmax=49.5) ]
@@ -45,7 +45,7 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
         self.Histograms += [ defineHistogram('trk_theta', type='TH1F', 
                 title="#theta of the tracks at the perigee;#theta",xbins=100, xmin=0.0, xmax=3.1415) ]
         self.Histograms += [ defineHistogram('trk_pt', type='TH1F', 
-                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=300, xmin=0.0, xmax=100.0) ]
+                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=200, xmin=0.0, xmax=10.0) ]
         self.Histograms += [ defineHistogram('trk_eta', type='TH1F', 
                 title="#eta of the tracks at the perigee;#eta",xbins=100, xmin=-4.5, xmax=4.5) ]
         
@@ -75,7 +75,7 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
         self.Histograms += [ defineHistogram('trk_theta_sel', type='TH1F', 
                 title="#theta of the tracks at the perigee;#theta",xbins=100, xmin=0.0, xmax=3.1415) ]
         self.Histograms += [ defineHistogram('trk_pt_sel', type='TH1F', 
-                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=300, xmin=0.0, xmax=100.0) ]
+                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=200, xmin=0.0, xmax=10.0) ]
         self.Histograms += [ defineHistogram('trk_eta_sel', type='TH1F', 
                 title="#eta of the tracks at the perigee;#eta",xbins=100, xmin=-4.5, xmax=4.5) ]
         
