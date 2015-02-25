@@ -38,7 +38,6 @@
 
 class TrigEFBjetContainer;
 
-class TaggerHelper;
 class TrigBjetTrackInfo;
 class TrigBjetJetInfo;
 
@@ -77,7 +76,6 @@ class TrigDvFex: public HLT::FexAlgo
     
     private:
         std::string m_jetKey;
-        std::string m_priVtxKey;
  
         /** @brief Enable monitoring histograms (online) */
         bool m_mon_online;
@@ -89,6 +87,9 @@ class TrigDvFex: public HLT::FexAlgo
         HLT::ErrorCode getTrackCollection(const xAOD::TrackParticleContainer*&, const HLT::TriggerElement*);
         /** @brief Retrieved the xAOD::Jet collection attached to the TE. */
         HLT::ErrorCode getJet(const xAOD::Jet * &,const HLT::TriggerElement*);
+
+        /** @brief Helper function to define the azimuthal angle between [-PI,PI] */
+        float phiCorr(const float & phi) const;
     
         /** @brief To select EF tracks. */
         bool efTrackSel(const xAOD::TrackParticle*&, unsigned int);
@@ -96,9 +97,7 @@ class TrigDvFex: public HLT::FexAlgo
         /** @brief Pointer to TrigEFBjet collection. */
         TrigEFBjetContainer* m_trigEFBjetColl;
     
-        /** @brief Pointer to TaggerHelper class. */ 
-        TaggerHelper* m_taggerHelper;
-
+        
         /** @brief Internal EDM class for jet direction information, defined in TrigBjetDataHelper. */ 
         TrigBjetJetInfo*    m_trigBjetJetInfo;
         /** @brief Internal EDM class for track parameter information, defined in TrigBjetDataHelper. */ 
@@ -109,16 +108,8 @@ class TrigDvFex: public HLT::FexAlgo
 
         /** @brief track reconstruction algorithm. */
         int m_algo;
-        /** @brief switch to use primary vertex computed with TrigT2HistoPrmVtx or InDetTrigPriVxFinder algorithm. */
-        bool m_histoPrmVtxAtEF;
         /** @brief switch to perform track-RoI eta/phi matching when selecting reconstructed tracks. */
         bool m_useEtaPhiTrackSel;
-        /** @brief switch to estimate the track impact parameter sign using the HLT jet 
-        * direction (1) or the HLT track-jet direction (2) or the LVL1 jet RoI direction (3). */
-        unsigned int m_useJetDirection;
-
-        /** @brief string corresponding to the trigger level in which the algorithm is running. */
-        std::string m_instance;
 
         /** @brief lower bound of the chi square of the reconstructed track (to perform track selection). */
         float m_trkSelChi2;

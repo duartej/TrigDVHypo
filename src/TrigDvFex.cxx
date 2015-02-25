@@ -6,7 +6,6 @@
 // ************************************************
 
 #include "TrigBjetHypo/TrigDvFex.h"
-#include "TaggerHelper.h"
 
 // Eigen library (Amg::error)
 #include "EventPrimitives/EventPrimitivesHelpers.h"
@@ -30,8 +29,7 @@
 
 //** ---------------------------------------------------------------------- **//
 const double TOLERANCE=1e-30;
-const double PI = 3.14159265358979323846264338327950288;
-const double HALF_PI = PI/2.0;
+const double HALF_PI = M_PI/2.0;
 
 TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   HLT::FexAlgo(name, pSvcLocator),
@@ -41,18 +39,13 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   m_totSelTracks(0)
 {
   declareProperty ("AlgoId",             m_algo);
-  declareProperty ("Instance",           m_instance);
   declareProperty ("JetKey",             m_jetKey     = ""); //"" needed for default config, SplitJet for new config
-  declareProperty ("PriVtxKey",          m_priVtxKey  = "EFHistoPrmVtx");
 
   declareProperty ("onlinemon",          m_mon_online = true);
   declareProperty ("validation",         m_mon_validation = true);
   
-  declareProperty ("HistoPrmVtxAtEF",    m_histoPrmVtxAtEF    = true);
   declareProperty ("UseEtaPhiTrackSel",  m_useEtaPhiTrackSel  = false);
   
-  declareProperty ("UseJetDirection",    m_useJetDirection);
-
   declareProperty ("TrkSel_Chi2",        m_trkSelChi2         = 0.0);
   declareProperty ("TrkSel_BLayer",      m_trkSelBLayer       = 1);
   declareProperty ("TrkSel_PixHits",     m_trkSelPixHits      = 2);
@@ -63,10 +56,10 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
 
   declareMonitoredStdContainer("trk_a0",            m_mon_trk_a0,        AutoClear);
   declareMonitoredStdContainer("trk_a0_sel",        m_mon_trk_a0_sel,    AutoClear);
-  declareMonitoredStdContainer("trk_S(a0)_sel",     m_mon_trk_Sa0_sel,   AutoClear);
+  declareMonitoredStdContainer("trk_Sa0_sel",       m_mon_trk_Sa0_sel,   AutoClear);
   declareMonitoredStdContainer("trk_z0",            m_mon_trk_z0,        AutoClear);
   declareMonitoredStdContainer("trk_z0_sel",        m_mon_trk_z0_sel,    AutoClear);
-  declareMonitoredStdContainer("trk_S(z0)_sel",     m_mon_trk_Sz0_sel,   AutoClear);
+  declareMonitoredStdContainer("trk_Sz0_sel",       m_mon_trk_Sz0_sel,   AutoClear);
   declareMonitoredStdContainer("trk_prob",          m_mon_trk_prob,      AutoClear);
 
   declareMonitoredStdContainer("trk_theta",         m_mon_trk_theta,     AutoClear);
@@ -111,7 +104,6 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareMonitoredVariable    ("roi_deltaEtaTrk",    m_deltaEtaTrk,    AutoClear);
   declareMonitoredVariable    ("roi_deltaPhiTrk",    m_deltaPhiTrk,    AutoClear);
 
-  m_taggerHelper = new TaggerHelper(msg(), msgLvl());
 }
 
 
@@ -120,7 +112,6 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
 
 TrigDvFex::~TrigDvFex() 
 {
-  if(m_taggerHelper)            delete m_taggerHelper;
   if(m_trigBjetJetInfo)         delete m_trigBjetJetInfo;
 }
 
@@ -136,15 +127,9 @@ HLT::ErrorCode TrigDvFex::hltInitialize()
     ATH_MSG_DEBUG("declareProperty review:");
 
     ATH_MSG_DEBUG(" JetKey = "               << m_jetKey );
-    ATH_MSG_DEBUG(" PriVtxKey = "            << m_priVtxKey );
 
     ATH_MSG_DEBUG(" AlgoId = "              << m_algo ); 
-    ATH_MSG_DEBUG(" Instance = "            << m_instance );
  
-    ATH_MSG_DEBUG(" HistoPrmVtxAtEF = "     << m_histoPrmVtxAtEF );
-    ATH_MSG_DEBUG(" UseEtaPhiTrackSel = "   << m_useEtaPhiTrackSel );
-    ATH_MSG_DEBUG(" UseJetDirection = "     << m_useJetDirection );
-
     ATH_MSG_DEBUG(" TrkSel_Chi2 = "     << m_trkSelChi2 ); 
     ATH_MSG_DEBUG(" TrkSel_BLayer = "   << m_trkSelBLayer ); 
     ATH_MSG_DEBUG(" TrkSel_SiHits = "   << m_trkSelSiHits ); 
@@ -224,10 +209,10 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     
     const int   nSiHits = nPixHits + nSCTHits;
     const float theta   = track->theta();
-    const float phi     = m_taggerHelper->phiCorr(track->phi());
+    const float phi     = phiCorr(track->phi());
     const float eta     = track->eta();
-    const float qOverPt = track->qOverP()/TMath::Sin(theta); 
-   //onst float pT      = (1.0/qOverPt);
+    //const float qOverPt = track->qOverP()/TMath::Sin(theta); 
+    //const float pT      = (1.0/qOverPt);
     const float pT      = track->pt();
     const float d0      = track->d0();
     const float z0      = track->z0();
@@ -267,14 +252,14 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
         
     if(m_useEtaPhiTrackSel) 
     {
-    	if(fabs(track->eta() - m_trigBjetJetInfo->etaRoI()) > 0.2) 
+    	if(std::abs(eta - m_etaRoI) > 0.2) 
         {
             ATH_MSG_DEBUG("  track " << i+1 << " is not selected (eta matching)");
             m_listCutApplied.push_back(CutListMonitor::RoIEtaMatching); 
             return false;
         }
         
-        if(fabs(m_taggerHelper->phiCorr(m_taggerHelper->phiCorr(track->phi()) - m_trigBjetJetInfo->phiRoI())) > 0.2) 
+        if(std::abs(phiCorr(phi- m_phiRoI)) > 0.2) 
         {
             ATH_MSG_DEBUG( "  track " << i+1 << " is not selected (phi matching)");
             m_listCutApplied.push_back(CutListMonitor::RoIPhiMatching); 
@@ -356,7 +341,7 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
         
         // RoI related
         m_deltaEtaTrk = m_etaRoI-eta;
-        m_deltaPhiTrk = m_taggerHelper->phiCorr(m_phiRoI-phi);
+        m_deltaPhiTrk = phiCorr(m_phiRoI-phi);
     }   
 
     if(m_mon_validation || m_mon_online)
@@ -368,42 +353,19 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
 	    const float errIP1D = Amg::error(track->definingParametersCovMatrix(),1);
         // ed0
 	    const float errIP2D = Amg::error(track->definingParametersCovMatrix(),0);
-    	const float z0 = track->z0();//;-m_trigBjetPrmVtxInfo->zPrmVtx();
-
-        float phiJetObject = 0.0;
-        float etaJetObject = 0.0; 
         
-        if(m_useJetDirection == 1) 
-        {
-            // Using HLT Jet 
-            phiJetObject = m_trigBjetJetInfo->phiJet();
-            etaJetObject = m_trigBjetJetInfo->etaJet();
-        }
-        else if(m_useJetDirection == 2) 
-        {
-            // Using HLT track-based jet
-            phiJetObject = m_trigBjetJetInfo->phiTrkJet();
-            etaJetObject = m_trigBjetJetInfo->etaTrkJet();
-        } 
-        else if(m_useJetDirection == 3) 
-        {
-            // Using the LvL1 jet RoI 
-	        phiJetObject = m_trigBjetJetInfo->phiRoI();
-            etaJetObject = m_trigBjetJetInfo->etaRoI();
-        }
-        const float d0Sign = m_taggerHelper->signedD0(track->d0(), track->phi(), phiJetObject);
-        const float z0Sign = m_taggerHelper->signedZ0(z0, track->eta(), etaJetObject);
-        //const float sigmaBeamSpot = (m_trigBjetPrmVtxInfo->xBeamSpotWidth()+
-        //        m_trigBjetPrmVtxInfo->yBeamSpotWidth())/2.0;
+        // Significance d0, z0: Note that the beam spot is not included meaning
+        // that the significance is going to grow (because of the inherent width of
+        // the beam)/
         float IP1D = 0.0;
         float IP2D = 0.0;
         if(fabs(errIP1D) > TOLERANCE)
         {
-            IP1D = z0Sign/sqrt(errIP1D*errIP1D);
+            IP1D = z0/sqrt(errIP1D*errIP1D);
         }
-        if( (fabs(errIP2D) > TOLERANCE) )//|| sigmaBeamSpot)
+        if( (fabs(errIP2D) > TOLERANCE) )
         {
-            IP2D = d0Sign/sqrt(IP2D*errIP2D);//+sigmaBeamSpot*sigmaBeamSpot);
+            IP2D = d0/sqrt(IP2D*errIP2D);
         }
         m_mon_trk_Sz0_sel.push_back(IP1D);
         m_mon_trk_Sa0_sel.push_back(IP2D);
@@ -460,11 +422,28 @@ HLT::ErrorCode TrigDvFex::getJet(const xAOD::Jet * & jetreturn, const HLT::Trigg
         { 
             static int i=0;   
             ATH_MSG_DEBUG("  ["<<i<<"-Jet]: Et=" << aJet->p4().Et()/CLHEP::GeV << " (GeV),"
-                   << "  Eta=" << aJet->p4().Eta() << " Phi= " << aJet->p4().Phi() 
-                << " Phi (corrected with helper)= " << m_taggerHelper->phiCorr(aJet->p4().Phi())) ;
+                   << "  Eta=" << aJet->p4().Eta() << " Phi= " << aJet->p4().Phi());
         }
     }
     return HLT::OK;
+}
+
+
+//** ----------------------------------------------------------------------------------------------------------------- **//
+// Correct the phi angle to be defined between [-PI,PI]
+float TrigDvFex::phiCorr(const float & phi) const
+{
+    float phicorr = phi;
+    if(phicorr < -M_PI)
+    { 
+        phicorr += 2.0*M_PI;
+    }
+    else if(phi > M_PI) 
+    {
+        phicorr -= 2.0*M_PI;
+    }
+    
+    return phicorr;
 }
  
 
@@ -495,7 +474,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     	return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
     }
     m_etaRoI = roiDescriptor->eta();
-    m_phiRoI = roiDescriptor->phi();
+    m_phiRoI = phiCorr(roiDescriptor->phi());
     ATH_MSG_DEBUG("Using TE: " << "RoI id " << roiDescriptor->roiId()
 	    << ", Phi = " <<  m_phiRoI << ", Eta = " << m_etaRoI);
     
@@ -515,7 +494,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     // Get number of reconstructed tracks in this RoI
     if(pointerToEFTrackCollections)
     {
-        m_totTracks = m_taggerHelper->getTrackNumber(pointerToEFTrackCollections);
+        m_totTracks = pointerToEFTrackCollections->size();
         for(unsigned int j = 0; j < m_totTracks; ++j) 
         {
             const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
@@ -537,12 +516,13 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     {
         m_totTracks = 0;
     }  
+    ATH_MSG_DEBUG("Found " << m_totTracks << " tracks in the RoI");
 
     
     // --- JetInfo
     // Jets: remember in some previous step, each jet has been associated to
     // a RoI, so the RoI and the jet information is the same
-    m_trigBjetJetInfo->setEtaPhiRoI(roiDescriptor->eta(), m_taggerHelper->phiCorr(roiDescriptor->phi()));
+    m_trigBjetJetInfo->setEtaPhiRoI(roiDescriptor->eta(), phiCorr(roiDescriptor->phi()));
     const xAOD::Jet * thejet = 0;
     HLT::ErrorCode xaodc = getJet(thejet,inputTE);
     if( xaodc != HLT::OK )
@@ -552,7 +532,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     
     if(thejet)
     {
-        m_trigBjetJetInfo->setEtaPhiJet(thejet->p4().Eta(),m_taggerHelper->phiCorr(thejet->p4().Phi()));
+        m_trigBjetJetInfo->setEtaPhiJet(thejet->p4().Eta(),thejet->p4().Phi());
         m_trigBjetJetInfo->setEtJet(thejet->p4().Et());
     }
 

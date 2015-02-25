@@ -23,7 +23,6 @@ class DvFex(TrigDvFex):
             return None
         
         self.JetKey = "SplitJet"
-        self.PriVtxKey = "EFHistoPrmVtx"
         
         self.AlgoId = -1
     
@@ -33,9 +32,6 @@ class DvFex(TrigDvFex):
         if self.AlgoId == -1:
             mlog.error("AlgoId is wrongly set!")
             return None
-        
-        if instance=="EF" :
-            self.Instance = "EF"
         
         self.UseEtaPhiTrackSel  = False
         
