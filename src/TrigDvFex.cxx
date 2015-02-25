@@ -18,6 +18,7 @@
 // --> Changing TrigEFBjetContainer --> TrigInDetTrackCollection ??
 #include "TrigParticle/TrigEFBjetContainer.h"
 
+// FIXME: TO BE DEPRECATED
 #include "TrigSteeringEvent/TrigOperationalInfo.h"
 
 

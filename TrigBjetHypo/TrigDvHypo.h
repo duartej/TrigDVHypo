@@ -83,6 +83,9 @@ class TrigDvHypo : public HLT::HypoAlgo
       	/** @brief Cut counter. */
       	//unsigned short int m_cutCounter; --> try to use bitmask to extract the cuts used
 	int m_cutCounter;
+
+    /** @brief monitoring number of selected tracks */
+    int m_tracksPerRoI;
 };
 
 #endif

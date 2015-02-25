@@ -44,7 +44,8 @@ TrigDvHypo::TrigDvHypo(const std::string& name, ISvcLocator* pSvcLocator) :
     
     declareProperty ("UseBeamSpotFlag", m_useBeamSpotFlag = false);
     
-    declareMonitoredVariable("CutCounter", m_cutCounter);
+    declareMonitoredVariable("CutCounter",    m_cutCounter,      AutoClear);
+    declareMonitoredVariable("nTracksperRoI", m_tracksPerRoI, AutoClear);
 }
 
 
@@ -181,6 +182,8 @@ HLT::ErrorCode TrigDvHypo::hltExecute(const HLT::TriggerElement* outputTE, bool&
     //* Loop over EFBjets and perform cut */
     for(auto &  trigEFBjet : *trigEFBjetContainer)
     {
+        m_tracksPerRoI= trigEFBjet->xNVtx();
+        
         result = true;
         // Apply the sequential cuts:
 	    // number of tracks
