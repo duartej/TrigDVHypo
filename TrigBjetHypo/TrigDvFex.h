@@ -138,7 +138,6 @@ class TrigDvFex: public HLT::FexAlgo
         /** @brief to monitor track quantities and effect ot the selection. */
         std::vector<float> m_mon_trk_a0, m_mon_trk_a0_sel, m_mon_trk_Sa0_sel;
         std::vector<float> m_mon_trk_z0, m_mon_trk_z0_sel, m_mon_trk_Sz0_sel;
-        std::vector<float> m_mon_trk_prob;
         std::vector<float> m_mon_trk_theta, m_mon_trk_pt, m_mon_trk_eta;
         std::vector<float> m_mon_trkSel_theta, m_mon_trkSel_pt, m_mon_trkSel_eta;
         /** @brief quality track */

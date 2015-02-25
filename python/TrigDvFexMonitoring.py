@@ -8,8 +8,6 @@ class TrigDvFexMonitoring(TrigGenericMonitoringToolConfig):
                 title="longitudinal IP for selected tracks;z_{0} [mm]",xbins=301, xmin=-300, xmax=300) ]
         self.Histograms += [ defineHistogram('trk_Sz0_sel', type='TH1F', 
                 title="longitudinal IP significance for selected tracks",xbins=301, xmin=-300.0, xmax=300.0) ]
-        self.Histograms += [ defineHistogram('trk_prob', type='TH1F', 
-                title="track probability estimated by JetProb",xbins=40, xmin=0.0, xmax=1.0) ]
         
         self.Histograms += [ defineHistogram('trk_a0_sel', type='TH1F', 
             title="transverse IP for selected tracks;d_{0} [mm]",xbins=101, xmin=-10, xmax=10) ]

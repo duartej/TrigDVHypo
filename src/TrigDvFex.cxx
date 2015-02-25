@@ -60,7 +60,6 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareMonitoredStdContainer("trk_z0",            m_mon_trk_z0,        AutoClear);
   declareMonitoredStdContainer("trk_z0_sel",        m_mon_trk_z0_sel,    AutoClear);
   declareMonitoredStdContainer("trk_Sz0_sel",       m_mon_trk_Sz0_sel,   AutoClear);
-  declareMonitoredStdContainer("trk_prob",          m_mon_trk_prob,      AutoClear);
 
   declareMonitoredStdContainer("trk_theta",         m_mon_trk_theta,     AutoClear);
   declareMonitoredStdContainer("trk_pt",            m_mon_trk_eta,       AutoClear);
