@@ -93,7 +93,7 @@ class TrigDvFex: public HLT::FexAlgo
     
         /** @brief To select EF tracks. */
         bool efTrackSel(const xAOD::TrackParticle*&, unsigned int);
-    
+
         /** @brief Pointer to TrigEFBjet collection. */
         TrigEFBjetContainer* m_trigEFBjetColl;
     
@@ -144,6 +144,7 @@ class TrigDvFex: public HLT::FexAlgo
         std::vector<int> m_mon_trk_BlayerHits, m_mon_trk_PixHits, m_mon_trk_SCTHits, m_mon_trk_TRTHits;
         std::vector<int> m_mon_trk_PixHoles, m_mon_trk_SCTHoles, m_mon_trk_TRTHoles;
         std::vector<int> m_mon_trk_PixSharedHits, m_mon_trk_SCTSharedHits;//, m_mon_trk_TRTSharedHits;
+
         /** @brief quality track passing d0 cut */
         std::vector<int> m_mon_trkSel_BlayerHits, m_mon_trkSel_PixHits, m_mon_trkSel_SCTHits, m_mon_trkSel_TRTHits;
         std::vector<int> m_mon_trkSel_PixHoles, m_mon_trkSel_SCTHoles, m_mon_trkSel_TRTHoles;
