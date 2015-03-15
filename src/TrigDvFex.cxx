@@ -63,7 +63,8 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   declareMonitoredStdContainer("trk_Sz0_sel",       m_mon_trk_Sz0_sel,   AutoClear);
 
   declareMonitoredStdContainer("trk_theta",         m_mon_trk_theta,     AutoClear);
-  declareMonitoredStdContainer("trk_pt",            m_mon_trk_eta,       AutoClear);
+  declareMonitoredStdContainer("trk_pt",            m_mon_trk_pt,       AutoClear);
+  declareMonitoredStdContainer("trk_qOverPt",       m_mon_trk_qOverPt,   AutoClear);
   declareMonitoredStdContainer("trk_eta",           m_mon_trk_eta,       AutoClear);
 
   declareMonitoredStdContainer("trk_BlayerHits",    m_mon_trk_BlayerHits,AutoClear);
@@ -80,7 +81,8 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   //declareMonitoredStdContainer("trk_TRTSharedHits", m_mon_trk_TRTSharedHits,   AutoClear);
   
   declareMonitoredStdContainer("trk_theta_sel",      m_mon_trkSel_theta,     AutoClear);
-  declareMonitoredStdContainer("trk_pt_sel",         m_mon_trkSel_eta,       AutoClear);
+  declareMonitoredStdContainer("trk_pt_sel",         m_mon_trkSel_pt,       AutoClear);
+  declareMonitoredStdContainer("trk_qOverPt_sel",    m_mon_trkSel_qOverPt,   AutoClear);
   declareMonitoredStdContainer("trk_eta_sel",        m_mon_trkSel_eta,       AutoClear);
 
   declareMonitoredStdContainer("trk_BlayerHits_sel", m_mon_trkSel_BlayerHits,AutoClear);

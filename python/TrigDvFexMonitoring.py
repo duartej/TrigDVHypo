@@ -43,7 +43,9 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
         self.Histograms += [ defineHistogram('trk_theta', type='TH1F', 
                 title="#theta of the tracks at the perigee;#theta",xbins=100, xmin=0.0, xmax=3.1415) ]
         self.Histograms += [ defineHistogram('trk_pt', type='TH1F', 
-                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=200, xmin=0.0, xmax=10.0) ]
+                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=201, xmin=0.0, xmax=200.0) ]
+        self.Histograms += [ defineHistogram('trk_qOverPt', type='TH1F', 
+                title="signed curvature of the tracks at the perigee;q/p_{T} [1.0/MeV]",xbins=200, xmin=-0.004, xmax=0.004) ]
         self.Histograms += [ defineHistogram('trk_eta', type='TH1F', 
                 title="#eta of the tracks at the perigee;#eta",xbins=100, xmin=-2.6, xmax=2.6) ]
         
@@ -73,7 +75,9 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
         self.Histograms += [ defineHistogram('trk_theta_sel', type='TH1F', 
                 title="#theta of the tracks at the perigee;#theta",xbins=100, xmin=0.0, xmax=3.1415) ]
         self.Histograms += [ defineHistogram('trk_pt_sel', type='TH1F', 
-                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=200, xmin=0.0, xmax=10.0) ]
+                title="p_{T} of the tracks at the perigee;p_{T} [GeV]",xbins=201, xmin=0.0, xmax=200.0) ]
+        self.Histograms += [ defineHistogram('trk_qOverPt_sel', type='TH1F', 
+                title="signed curvature of the tracks at the perigee;q/p_{T} [1.0/MeV]",xbins=200, xmin=-0.004, xmax=0.004) ]
         self.Histograms += [ defineHistogram('trk_eta_sel', type='TH1F', 
                 title="#eta of the tracks at the perigee;#eta",xbins=100, xmin=-4.5, xmax=4.5) ]
         
