@@ -207,17 +207,18 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     track->summaryValue(nTRTHoles,      xAOD::numberOfTRTHoles);
     //track->summaryValue(nTRTSharedHits, xAOD::numberOfTRTSharedHits);
 
-  
     
-    const int   nSiHits = nPixHits + nSCTHits;
-    const float theta   = track->theta();
-    const float phi     = phiCorr(track->phi());
-    const float eta     = track->eta();
-    //const float qOverPt = track->qOverP()/TMath::Sin(theta); 
+    
+    const int   nSiHits  = nPixHits + nSCTHits;
+    const int   totalHits= nSiHits + nTRTHits;
+    const float theta    = track->theta();
+    const float phi      = phiCorr(track->phi());
+    const float eta      = track->eta();
+    const float qOverPt  = track->qOverP()/TMath::Sin(theta); 
     //const float pT      = (1.0/qOverPt);
-    const float pT      = track->pt();
-    const float d0      = track->d0();
-    const float z0      = track->z0();
+    const float pT       = track->pt();
+    const float d0       = track->d0();
+    const float z0       = track->z0();
 
 
     ATH_MSG_VERBOSE( "efTrackSel method\n" <<
@@ -237,6 +238,7 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
         m_mon_trk_z0.push_back(z0/CLHEP::mm);
         m_mon_trk_theta.push_back(theta);
         m_mon_trk_pt.push_back(pT/CLHEP::GeV);
+        m_mon_trk_qOverPt.push_back(qOverPt);
         m_mon_trk_eta.push_back(eta);
 
         // Quality
@@ -327,6 +329,7 @@ bool TrigDvFex::efTrackSel(const xAOD::TrackParticle*& track, unsigned int i)
     {
         m_mon_trkSel_theta.push_back(theta);
         m_mon_trkSel_pt.push_back(pT/CLHEP::GeV);
+        m_mon_trkSel_qOverPt.push_back(qOverPt);
         m_mon_trkSel_eta.push_back(eta);
 
         // Quality
