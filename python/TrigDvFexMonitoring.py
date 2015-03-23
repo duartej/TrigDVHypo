@@ -91,7 +91,7 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
                 title="Tracks hits at the TRT",xbins=51, xmin=-0.5, xmax=50.5) ]
         
         self.Histograms += [ defineHistogram('trk_PixHoles_sel', type='TH1I', 
-                title="Number of pixel layers with absence of hits (pixel))",xbins=11, xmin=-0.5, xmax=10).5 ]
+                title="Number of pixel layers with absence of hits (pixel))",xbins=11, xmin=-0.5, xmax=10.5) ]
         self.Histograms += [ defineHistogram('trk_SCTHoles_sel', type='TH1I', 
                 title="Number of SCT layers with absence of hits",xbins=16, xmin=-0.5, xmax=15.5) ]
         self.Histograms += [ defineHistogram('trk_TRTHoles_sel', type='TH1I', 
@@ -145,28 +145,28 @@ class TrigEFDvFexValidationMonitoring(TrigDvFexMonitoring):
                                               ybins=51,ymin=-0.5,ymax=50.5)
                                               ]
 
-        self.Histograms += [ defineHistogram('roi_nTracks_sel,trk_BlayerHits_sel',
+        self.Histograms += [ defineHistogram('roi_nTracks,trk_BlayerHits_sel',
                                               type='TH2I',
                                               title="reconstructed tracks vs. hits in B-layer",
                                               xbins=50,xmin=-0.5,xmax=49.5,
                                               ybins=4,ymin=-0.5,ymax=3.5)
                                               ]
         
-        self.Histograms += [ defineHistogram('roi_nTracks_sel,trk_PixHits_sel',
+        self.Histograms += [ defineHistogram('roi_nTracks,trk_PixHits_sel',
                                               type='TH2I',
                                               title="reconstructed tracks vs. pixel hits",
                                               xbins=50,xmin=-0.5,xmax=49.5,
                                               ybins=11,ymin=-0.5,ymax=10.5)
                                               ]
 
-        self.Histograms += [ defineHistogram('roi_nTracks_sel,trk_SCTHits_sel',
+        self.Histograms += [ defineHistogram('roi_nTracks,trk_SCTHits_sel',
                                               type='TH2I',
                                               title="reconstructed tracks vs. SCT hits",
                                               xbins=50,xmin=-0.5,xmax=49.5,
                                               ybins=16,ymin=-0.5,ymax=15.5)
                                               ]
         
-        self.Histograms += [ defineHistogram('roi_nTracks_sel,trk_TRTHits_sel',
+        self.Histograms += [ defineHistogram('roi_nTracks,trk_TRTHits_sel',
                                               type='TH2I',
                                               title="reconstructed tracks vs. TRT hits",
                                               xbins=50,xmin=-0.5,xmax=49.5,
