@@ -395,7 +395,8 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     else: 
         tracking = "IDTrig"
 
-    jetHypoTE = "HLT_j"+btagthresh+"_eta"    #  Jets eta/pt cut
+    #jetHypoTE = "HLT_j"+btagthresh+"_eta"    #  Jets eta/pt cut
+    jetHypoTE = "HLT_j35_eta"                #  Changed!!
     jetSplitTE = jetHypoTE+"_jsplit"         #  Jets splitted in several TE
     jetTrackTE = jetSplitTE+"_"+tracking     #  Jets reconstructed at HLT
     superTE = "HLT_super"                    #  One SuperRoI only
@@ -410,8 +411,9 @@ def myDvConfig_split(theChainDef, chainDict, inputTEsEF,numberOfSubChainDicts=1)
     #-----------------------------------------------------------------------------------
 
     # Remember-> algorithm instance, inputTE, outputTE
-    theChainDef.addSequence(theJetHypo,     inputTEsEF, jetHypoTE)
-    theChainDef.addSequence(theJetSplit,    jetHypoTE,  jetSplitTE)
+    #theChainDef.addSequence(theJetHypo,     inputTEsEF, jetHypoTE) --> Change the first sequence: j35
+    #theChainDef.addSequence(theJetSplit,    jetHypoTE,  jetSplitTE) --> Change the first sequence: j35
+    theChainDef.addSequence(theJetSplit,inputTEsEF,jetSplitTE)
     theChainDef.addSequence(theBjet_tracks, jetSplitTE, jetTrackTE)
 
     #theChainDef.addSequence(theSuperRoi,      inputTEsEF, superTE)
