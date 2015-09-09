@@ -13,14 +13,21 @@
 #define TRIGDVFEX_H
 
 #include "GaudiKernel/ToolHandle.h"
+// JDC TESTING
+#include "GaudiKernel/ServiceHandle.h"
 
 #include "TrigInterfaces/FexAlgo.h"
 //#include "TrigSteeringEvent/Enums.h"
 
 #include "TrigBjetHypo/TrigBjetDataHelper.h"
 
+// JDC TESTING
+#include "InDetPrepRawData/TRT_DriftCircleContainer.h"
+#include "InDetPrepRawData/SiClusterContainer.h"
+
 // system
 #include<vector>
+#include<unordered_set>
 #include<string>
 
 
@@ -40,6 +47,26 @@ class TrigEFBjetContainer;
 
 class TrigBjetTrackInfo;
 class TrigBjetJetInfo;
+
+// JDC TESTING
+class IRegSelSvc;
+class TrigRoiDescriptor;
+namespace Trk
+{
+    class PrepRawData;
+}
+//namespace InDet
+//{
+//    class SiClusterContainer;
+//    class TRT_DriftCircleContainer;
+//}
+
+enum class TrigDvFexDet 
+{
+    PIXEL = 1,
+    SCT   = 2,
+    TRT   = 3
+};
 
 /**
  * @brief FEX class for the displaced vertex searches (r_{DV} < 300 mm) to be used 
@@ -73,6 +100,8 @@ class TrigDvFex: public HLT::FexAlgo
         HLT::ErrorCode hltInitialize();
         HLT::ErrorCode hltExecute(const HLT::TriggerElement* input, HLT::TriggerElement* output);
         HLT::ErrorCode hltFinalize(); 
+        // JDC 
+        HLT::ErrorCode hltEndEvent();
     
     private:
         std::string m_jetKey;
@@ -81,6 +110,17 @@ class TrigDvFex: public HLT::FexAlgo
         bool m_mon_online;
         /** @brief Enable monitoring histograms (validation) */
         bool m_mon_validation;
+
+        // JDC TESTING --> 
+        ServiceHandle<IRegSelSvc>  m_regionSelector;
+        const InDet::SiClusterContainer * m_pixcontainer_v;
+        const InDet::SiClusterContainer * m_sctcontainer_v;
+        const InDet::TRT_DriftCircleContainer * m_trtcontainer_v;
+
+        bool m_is_pix_filled;
+        bool m_is_sct_filled;
+        bool m_is_trt_filled;
+        bool m_are_prds_filled;
     
 
         /** @brief To retrieve track collections reconstructed at EF and stored in TrackParticleContainer. */
@@ -93,6 +133,14 @@ class TrigDvFex: public HLT::FexAlgo
     
         /** @brief To select EF tracks. */
         bool efTrackSel(const xAOD::TrackParticle*&, unsigned int);
+
+        /** @brief Function retrieving the Hits (PrepRawData) found in the inner detector at a given RoI */
+        std::vector<const Trk::PrepRawData*> getPRDsfromID(const TrigRoiDescriptor * roi);
+        /** @brief update the Prepared raw data collection for the given event */
+        HLT::ErrorCode updatePRDs(const TrigDvFexDet & detectortype);
+        
+        /** @brief update the Prepared raw data collection for the given track */
+        void updateTrackPRDs(const xAOD::TrackParticle * track, std::unordered_set<const Trk::PrepRawData*> & prds);
 
         /** @brief Pointer to TrigEFBjet collection. */
         TrigEFBjetContainer* m_trigEFBjetColl;

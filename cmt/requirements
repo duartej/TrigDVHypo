@@ -15,6 +15,8 @@ use     VxSecVertex             VxSecVertex-*                   Tracking/TrkEven
 use     TrigInDetEvent          TrigInDetEvent-*                Trigger/TrigEvent
 use     xAODBase                xAODBase-*                  	Event/xAOD
 use     xAODTracking            xAODTracking-*             	Event/xAOD
+# JDC
+use     InDetPrepRawData  InDetPrepRawData-*    InnerDetector/InDetRecEvent
 
 # ============================================================================================
 private
@@ -37,7 +39,11 @@ use 	TrigTimeAlgs 		TrigTimeAlgs-* 			Trigger/TrigTools
 use     xAODJet                 xAODJet-*                       Event/xAOD
 use     xAODBTagging            xAODBTagging-*              	Event/xAOD
 use xAODCore               xAODCore-*               Event/xAOD  
-
+## JDC
+use     IRegionSelector   IRegionSelector-*     DetectorDescription
+use     TrkRIO_OnTrack    TrkRIO_OnTrack-*      Tracking/TrkEvent
+#use     InDetPrepRawData  InDetPrepRawData-*    InnerDetector/InDetRecEvent
+#use     TrkPrepRawData     TrkPrepRawData-*        Tracking/TrkEvent
 
 # ============================================================================================
 public
