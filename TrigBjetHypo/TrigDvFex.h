@@ -222,6 +222,17 @@ class TrigDvFex: public HLT::FexAlgo
         /** @brief Number of selected tracks per RoI. */
         float m_totSelTracks;
 
+        /** @brief number of total unused hits **/
+        float m_unusedhits;
+        /** @brief fraction of unused hits from the total hits **/
+        float m_unusedhits_fraction;
+        /** @brief number of total hits in the pixel per roi **/
+        float m_pixhits_at_roi;
+        /** @brief number of total hits in the SCT per roi **/
+        float m_scthits_at_roi;
+        /** @brief number of total hits in the TRT per roi **/
+        float m_trthits_at_roi;
+
         /** @brief Delta eta between the LVL1 jet RoI and the EF track-jet. */
         float m_deltaEtaTrk;
         /** @brief Delta phi between the LVL1 jet RoI and the EF track-jet. */
