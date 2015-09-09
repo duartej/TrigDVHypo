@@ -7,9 +7,6 @@
 
 #include "TrigBjetHypo/TrigDvFex.h"
 
-// JDC REMOVE
-#include<ctime>
-
 // Eigen library (Amg::error)
 #include "EventPrimitives/EventPrimitivesHelpers.h"
 
@@ -26,11 +23,6 @@
 //#include "TrkPrepRawData/PrepRawDataContainer.h"
 #include "IRegionSelector/IRegSelSvc.h"
 #include "IRegionSelector/IRoiDescriptor.h"
-// --- Algun include me esta definiendo las dos clases de abajo
-//     (con typedef) pero de forma ligermente diferente, or
-//     problemas con forwarding complicados typedef's
-//#include "InDetPrepRawData/TRT_DriftCircleContainer.h"
-//#include "InDetPrepRawData/SiClusterContainer.h"
 
 // FIXME: TO BE DEPRECATED
 #include "TrigSteeringEvent/TrigOperationalInfo.h"
@@ -276,7 +268,6 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
            << " using a total of " << prds.size() << " PRDs");
 
     // Obtain the number of unused hits in the RoI
-    clock_t start = clock();
     unsigned int unusedhits = 0;
     for(auto & currentPRD_was_used: prds_at_roi)
     {
@@ -285,7 +276,6 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
             ++unusedhits;
         }
     }
-    clock_t stop = clock();
     ATH_MSG_INFO("Wasted " << ((stop-start)*1e-3) << " ms. in evaluate " << prds_at_roi.size() 
             << " PRDs using find method " << prds.size() << "-times");
     ATH_MSG_INFO("Number of unused hits: " << unusedhits 
@@ -325,7 +315,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
 	    0, 0, 0, 0.0,  m_trigBjetJetInfo->etJet(),
 	    -1,-1,-1, -1,-1,  // Note, i can use this to fill other stuff if I need 
 	    10.0*CLHEP::mm, 10.0*CLHEP::GeV,  //TRACK-
-        0.0, m_totSelTracks);   //TRACK-
+        unusedhits, m_totSelTracks);   //TRACK- unused hits and selected tracks
 
     trigEFBjet->validate(true);
     m_trigEFBjetColl->push_back(trigEFBjet);
@@ -899,6 +889,8 @@ std::vector<const Trk::PrepRawData*> TrigDvFex::getPRDsfromID(const TrigRoiDescr
     }
     npartial = prds_at_roi.size() - npartial;
     ATH_MSG_INFO("Number of SCT PRDs at this RoI: " << npartial);
+    // Recovering the total: Pixel plus SCT
+    npartial = prds_at_roi.size();
 
     // TRT
     InDet::TRT_DriftCircleContainer::const_iterator endTRTContainer = m_trtcontainer_v->end();
