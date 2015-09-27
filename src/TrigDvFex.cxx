@@ -23,6 +23,7 @@
 //#include "TrkPrepRawData/PrepRawDataContainer.h"
 #include "IRegionSelector/IRegSelSvc.h"
 #include "IRegionSelector/IRoiDescriptor.h"
+#include "InDetReadoutGeometry/SiDetectorElement.h"
 
 // FIXME: TO BE DEPRECATED
 #include "TrigSteeringEvent/TrigOperationalInfo.h"
@@ -36,7 +37,6 @@
 //** ---------------------------------------------------------------------- **//
 const double TOLERANCE=1e-30;
 const double HALF_PI = M_PI/2.0;
-
 
 
 TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
@@ -55,13 +55,12 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
   m_totSelTracks(0),
   m_unusedhits(0),
   m_unusedhits_fraction(0),
-  m_pixhits_at_roi(0),
-  m_scthits_at_roi(0),
-  m_trthits_at_roi(0),
   m_deltaEtaTrk(0),
   m_deltaPhiTrk(0)
 {
   declareProperty ("AlgoId",             m_algo);
+
+  // Services
   declareProperty ("JetKey",             m_jetKey     = ""); //"" needed for default config, SplitJet for new config
 
   declareProperty ("onlinemon",          m_mon_online = true);
@@ -127,9 +126,6 @@ TrigDvFex::TrigDvFex(const std::string& name, ISvcLocator* pSvcLocator) :
 
   declareMonitoredVariable    ("roi_unusedhits" ,         m_unusedhits,         AutoClear);
   declareMonitoredVariable    ("roi_unusedhits_fraction", m_unusedhits_fraction,AutoClear);
-  declareMonitoredVariable    ("roi_pixhits" ,            m_pixhits_at_roi,     AutoClear);
-  declareMonitoredVariable    ("roi_scthits" ,            m_scthits_at_roi,     AutoClear);
-  declareMonitoredVariable    ("roi_trthits" ,            m_trthits_at_roi,      AutoClear);
   
   declareMonitoredVariable    ("roi_deltaEtaTrk",    m_deltaEtaTrk,    AutoClear);
   declareMonitoredVariable    ("roi_deltaPhiTrk",    m_deltaPhiTrk,    AutoClear);
@@ -188,11 +184,14 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
 {
     ATH_MSG_DEBUG("Executing TrigDvFex");
 
-    // Clear and initialize data members
+    // Clear and initialize data members ---> put it in a fucntion and be sure is DONE for all variables!
+    // FIXME
     m_etaRoI = -999;
     m_phiRoI = -999;
     m_totSelTracks = 0;
     m_totTracks    = 0;
+    m_unusedhits   = 0;
+    m_unusedhits_fraction = 0.0;
     m_setPVInfo    = false;
   
     m_trigBjetJetInfo->clear();
@@ -203,7 +202,7 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     const TrigRoiDescriptor* roiDescriptor = 0;
     if(getFeature(inputTE, roiDescriptor, m_jetKey) != HLT::OK) 
     {
-        ATH_MSG_DEBUG("No feature for this Trigger Element");    	
+        ATH_MSG_ERROR("No feature for this Trigger Element");    	
     	return HLT::ErrorCode(HLT::Action::ABORT_CHAIN, HLT::Reason::NAV_ERROR);
     }
     m_etaRoI = roiDescriptor->eta();
@@ -230,9 +229,9 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     {
         return ec;
     }
-    // Get the PRDs available in the RoI
-    const std::vector<const Trk::PrepRawData*> prds_at_roi = getPRDsfromID(roiDescriptor);
-
+    // Get the PRDs available in the RoI 
+    const PrdsAtRoI prds_at_roi = getPRDsfromID(roiDescriptor);
+    
     // -----------------------------------
     // Get Track collection 
     // -----------------------------------
@@ -247,17 +246,15 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
     std::vector<TrigBjetTrackInfo> trigBjetTrackInfoVector;
     m_trigBjetTrackInfoVector = &trigBjetTrackInfoVector;
     // Get number of reconstructed tracks in this RoI
-    // and check the PRDs associated
-    std::unordered_set<const Trk::PrepRawData*> prds;
+    std::unordered_set<const Trk::PrepRawData*> prds_at_tracks;
     if(pointerToEFTrackCollections)
     {
-        
         m_totTracks = pointerToEFTrackCollections->size();
         for(unsigned int j = 0; j < m_totTracks; ++j) 
         {
             const xAOD::TrackParticle* track = (*pointerToEFTrackCollections)[j];
             // updating the prds used by the tracks
-            updateTrackPRDs(track,prds);
+            updateTrackPRDs(track,prds_at_tracks);
 
             if(efTrackSel(track, j)) 
             {
@@ -278,16 +275,59 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
         m_totTracks = 0;
     }  
     ATH_MSG_DEBUG("Found " << m_totTracks << " tracks in the RoI " 
-           << " using a total of " << prds.size() << " PRDs");
+           << " using a total of " << prds_at_tracks.size() << " PRDs");
 
     // Obtain the number of unused hits in the RoI
-    for(auto & currentPRD_was_used: prds_at_roi)
+    std::map<DETID,int> unusedhits = { {PIXEL,0}, {SCT,0},{TRT,0} } ;
+    int unusedhits_blayer = 0;
+    
+    unsigned int _usedHits = 0;
+    // Was used in the prds' tracks -->> change code..?..
+    // Pixel
+    for(auto & currentPRD: prds_at_roi.pixel)
     {
-        if( prds.find(currentPRD_was_used) == prds.end() )
+        if( prds_at_tracks.find(currentPRD) == prds_at_tracks.end() )
         {
-            ++m_unusedhits;
+            ++(unusedhits[PIXEL]);
+            // Is in the B-layer?
+            if( prds_at_roi.blayer.find(currentPRD) != prds_at_roi.blayer.end() )
+            {
+                ++unusedhits_blayer;
+            }
+        }
+        else
+        {
+            ++_usedHits;
         }
     }
+    // SCT        
+    for(auto & currentPRD: prds_at_roi.sct)
+    {
+        if( prds_at_tracks.find(currentPRD) == prds_at_tracks.end() )
+        {
+            ++(unusedhits[SCT]);
+        }
+        else
+        {
+            ++_usedHits;
+        }
+    }
+    // TRT
+    for(auto & currentPRD: prds_at_roi.trt)
+    {
+        if( prds_at_tracks.find(currentPRD) == prds_at_tracks.end() )
+        {
+            ++(unusedhits[TRT]);
+        }
+        else
+        {
+            ++_usedHits;
+        }
+    }
+
+    m_unusedhits = (unusedhits[PIXEL]+unusedhits[SCT]+unusedhits[TRT]);
+
+    
     if( prds_at_roi.size() > 0)
     {
         m_unusedhits_fraction = m_unusedhits/((float)(prds_at_roi.size()));
@@ -297,12 +337,31 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
         m_unusedhits_fraction = 0.0;
     }
 
-    ATH_MSG_DEBUG("Number of unused hits: " << m_unusedhits 
-            << " (from a total of " << prds_at_roi.size() << " in the RoI, i.e. " 
-            << (m_unusedhits_fraction*100.0) << "%)");
-    //std::unordered_set<const Trk::PrepRawData*>::const_iter itPRDs = std::set_intersection(prds_at_roi.begin(),prds_at_roi.end(),
-    //        prds.begin(),prds.end());
+    // blayer
+    float unusedhits_blayer_frac = 0.0;
+    if( prds_at_roi.blayer.size() > 0 )
+    {
+        unusedhits_blayer_frac = ((float)unusedhits_blayer)/((float)prds_at_roi.blayer.size());
+    }
     
+    // debug information
+    if(msgLvl() <= MSG::DEBUG) 
+    {
+        const unsigned int prds_pix_total = prds_at_roi.pixel.size();
+        const unsigned int prds_sct_total = prds_at_roi.sct.size();
+        const unsigned int prds_trt_total = prds_at_roi.trt.size();
+        
+        ATH_MSG_DEBUG("Number of unused hits: " << m_unusedhits 
+                << " (from a total of " << prds_at_roi.size() << " in the RoI, i.e. " 
+                << (m_unusedhits_fraction*100.0) << "%)");
+        ATH_MSG_DEBUG("Number of used hits: " << _usedHits);
+        ATH_MSG_DEBUG("  * Pixel: " << (unusedhits[PIXEL]) << " - "
+                << ((prds_pix_total != 0) ? ((float)(unusedhits[PIXEL]))/((float)prds_pix_total)*100. : 0) << "%");
+        ATH_MSG_DEBUG("   * SCT  : " << (unusedhits[SCT])  << " - "
+                << ((prds_sct_total != 0) ? ((float)(unusedhits[SCT]))/((float)prds_sct_total)*100. : 0) << "%");
+        ATH_MSG_DEBUG("   * TRT  : " << (unusedhits[TRT])  << " - "
+                << ((prds_trt_total != 0) ? ((float)(unusedhits[TRT]))/((float)prds_trt_total)*100. : 0) << "%");
+    }
     // --- JetInfo
     // Jets: remember in some previous step, each jet has been associated to
     // a RoI, so the RoI and the jet information is the same
@@ -319,7 +378,6 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
         m_trigBjetJetInfo->setEtaPhiJet(thejet->p4().Eta(),thejet->p4().Phi());
         m_trigBjetJetInfo->setEtJet(thejet->p4().Et());
     }
-
   
     // New container to
     m_trigEFBjetColl = new TrigEFBjetContainer();
@@ -337,16 +395,16 @@ HLT::ErrorCode TrigDvFex::hltExecute(const HLT::TriggerElement* inputTE, HLT::Tr
 	    0,                        //  TrackCollection
         0,                        //  PriVtxCollection
         0,                        //  SecVtxCollection
-        0.0,                      // prmVtx
+        prds_at_roi.pixel.size(), // prmVtx
         m_trigBjetJetInfo->etJet(), // ptJet
-	    m_pixhits_at_roi,      // xComb
-        m_scthits_at_roi,      // xIP1d
-        m_trthits_at_roi,      // xIP2d
-        m_unusedhits,          // xIP3d
-        m_unusedhits_fraction, // xChi2 
-	    10.0*CLHEP::mm,        // xSv
+	    unusedhits[PIXEL],     // xComb 
+        prds_at_roi.sct.size(),// xIP1d
+        unusedhits[SCT],       // xIP2d
+        prds_at_roi.trt.size(),// xIP3d
+        unusedhits[TRT],       // xChi2 
+	    10.0*CLHEP::mm,        // xSv 
         10.0*CLHEP::GeV,       // xMvtx
-        m_unusedhits_fraction, // xEvtx
+        unusedhits_blayer_frac,// xEvtx
         m_totSelTracks);       // xNvtx
 
     trigEFBjet->validate(true);
@@ -731,9 +789,12 @@ float TrigDvFex::phiCorr(const float & phi) const
     return phicorr;
 }
 
-// Update the full list of PRD of the Event
+// Update the full list of PRDs per Event. The full filling job is done only
+// once per Event, because the PRDs collection belong to an Event (the same
+// collections for the same Event's RoIs)
 HLT::ErrorCode TrigDvFex::updatePRDs(const TrigDvFexDet & detsystem)
 {
+    // check if it was already filled ( with the first RoI of the event)
     if( m_are_prds_filled )
     {
         return HLT::OK;
@@ -790,12 +851,10 @@ HLT::ErrorCode TrigDvFex::updatePRDs(const TrigDvFexDet & detsystem)
     m_are_prds_filled = m_is_pix_filled && m_is_sct_filled && m_is_trt_filled;
 
     // Just in DEBUG mode show some info
-    //if(msgLvl() <= MSG::DEBUG && m_are_prds_filled )  
-    if(msgLvl() <= MSG::INFO && m_are_prds_filled )  
+    if(msgLvl() <= MSG::DEBUG && m_are_prds_filled )  
     {
         ATH_MSG_INFO("Total number of PrepRawData extracted from the Event");
         // Pixel
-        unsigned int nRDOPix  = 0;
         unsigned int nPRDsPix = 0;
         for(auto & pixhitcollection: * m_pixcontainer_v)
         {
@@ -803,16 +862,10 @@ HLT::ErrorCode TrigDvFex::updatePRDs(const TrigDvFexDet & detsystem)
             {
                 continue;
             }
-            for( auto & pixhit: *pixhitcollection)
-            {
-                ++nPRDsPix;
-                nRDOPix += pixhit->rdoList().size();
-            }
+            nPRDsPix += pixhitcollection->size();
         }
-        ATH_MSG_INFO("Got " << nPRDsPix << " PRDs from Pixel" 
-                << " with " << nRDOPix << " in total");
+        ATH_MSG_INFO("Got " << nPRDsPix << " PRDs from Pixel"); 
         // SCT
-        unsigned int nRDOSCT = 0;
         unsigned int nPRDsSCT = 0;
         for(auto & scthitcollection: *m_sctcontainer_v)
         {
@@ -820,17 +873,10 @@ HLT::ErrorCode TrigDvFex::updatePRDs(const TrigDvFexDet & detsystem)
             {
                 continue;
             }
-            for(auto & scthit: *scthitcollection)
-            {
-                ++nPRDsSCT;
-                nRDOSCT += scthit->rdoList().size();
-            }
+            nPRDsSCT += scthitcollection->size();
         }
-        ATH_MSG_INFO("Got " << nPRDsSCT << " PRDs from SCT" 
-                << " with " << nRDOSCT << " in total");
-        
+        ATH_MSG_INFO("Got " << nPRDsSCT << " PRDs from SCT" );
         // TRT
-        unsigned int nRDOTRT = 0;
         unsigned int nPRDsTRT= 0;
         for(auto & trthitcollection: *m_trtcontainer_v)
         {
@@ -838,43 +884,31 @@ HLT::ErrorCode TrigDvFex::updatePRDs(const TrigDvFexDet & detsystem)
             {
                 continue;
             }
-            for(auto & trthit: *trthitcollection)
-            {
-                ++nPRDsTRT;
-                nRDOTRT += trthit->rdoList().size();
-            }
+            nPRDsTRT += trthitcollection->size();
         }
-        ATH_MSG_INFO("Got " << nPRDsTRT << " PRDs from TRT"
-                << " with " << nRDOTRT << " in total");
+        ATH_MSG_INFO("Got " << nPRDsTRT << " PRDs from TRT");
     }
 
     return HLT::OK;
 }
 
-// Getting the PRDs belonging to the current RoI
-std::vector<const Trk::PrepRawData*> TrigDvFex::getPRDsfromID(const TrigRoiDescriptor * roi)
+
+// Extract the PRDs which belongs to detector elements placed at 
+// the current RoI 
+PrdsAtRoI TrigDvFex::getPRDsfromID(const TrigRoiDescriptor * roi)
 {
     // =====================================================
     // Obtaining the hits inside this RoI 
+    
+    // Initialize vector of PRDs
+    //std::vector<const Trk::PrepRawData*> prds_at_roi; 
+    PrdsAtRoI prds_at_roi;
+    
     // Pixel hash id's
     std::vector<IdentifierHash> listOfPixIds;
     m_regionSelector->DetHashIDList(PIXEL,*roi,listOfPixIds);
     ATH_MSG_DEBUG("Found " << listOfPixIds.size() << " PIXEL det. elements");
-    
-    // SCT has id's
-    std::vector<IdentifierHash> listOfSCTIds;
-    m_regionSelector->DetHashIDList(SCT,*roi,listOfSCTIds);
-    ATH_MSG_DEBUG("Found " << listOfSCTIds.size() << " SCT det. elements");
-    
-    // TRT hash id's
-    std::vector<IdentifierHash> listOfTRTIds;
-    m_regionSelector->DetHashIDList(TRT,*roi,listOfTRTIds);
-    ATH_MSG_DEBUG("Found " << listOfTRTIds.size() << " TRT det. elements");
-    
-    // Initialize vector of PRDs
-    std::vector<const Trk::PrepRawData*> prds_at_roi;
-    
-    // Pixel
+    // Pixel hits
     InDet::SiClusterContainer::const_iterator endPixContainer = m_pixcontainer_v->end();
     for(auto & id_pix: listOfPixIds)
     {
@@ -890,14 +924,22 @@ std::vector<const Trk::PrepRawData*> TrigDvFex::getPRDsfromID(const TrigRoiDescr
             const InDet::SiClusterCollection * pixcollection = *currentPixCol;
             for( auto & pixhit: * pixcollection )
             {
-                prds_at_roi.push_back(pixhit);
-                ++m_pixhits_at_roi;
+                prds_at_roi.pixel.insert(pixhit);
+                if( pixhit->detectorElement()->isBlayer() )
+                {
+                    prds_at_roi.blayer.insert(pixhit);
+                }
             }
         }
     }
-    ATH_MSG_DEBUG("Number of Pixel PRDs at this RoI: " << m_pixhits_at_roi);
+    ATH_MSG_DEBUG("Number of Pixel PRDs at this RoI: " << prds_at_roi.pixel.size()
+            << "(" << prds_at_roi.blayer.size() << " B-layers)"); 
     
-    // SCT
+    // SCT has id's
+    std::vector<IdentifierHash> listOfSCTIds;
+    m_regionSelector->DetHashIDList(SCT,*roi,listOfSCTIds);
+    ATH_MSG_DEBUG("Found " << listOfSCTIds.size() << " SCT det. elements");
+    // SCT hits
     InDet::SiClusterContainer::const_iterator endSCTContainer = m_sctcontainer_v->end();
     for(auto & id_sct: listOfSCTIds)
     {
@@ -914,14 +956,17 @@ std::vector<const Trk::PrepRawData*> TrigDvFex::getPRDsfromID(const TrigRoiDescr
             
             for( auto & scthit: * sctcollection )
             {
-                prds_at_roi.push_back(scthit);
-                ++m_scthits_at_roi;
+                prds_at_roi.sct.insert(scthit);
             }
         }
     }
-    ATH_MSG_DEBUG("Number of SCT PRDs at this RoI: " << m_scthits_at_roi);
-
-    // TRT
+    ATH_MSG_DEBUG("Number of SCT PRDs at this RoI: " << prds_at_roi.sct.size());
+    
+    // TRT hash id's
+    std::vector<IdentifierHash> listOfTRTIds;
+    m_regionSelector->DetHashIDList(TRT,*roi,listOfTRTIds);
+    ATH_MSG_DEBUG("Found " << listOfTRTIds.size() << " TRT det. elements");
+    // TRT hits
     InDet::TRT_DriftCircleContainer::const_iterator endTRTContainer = m_trtcontainer_v->end();
     for(auto & id_trt: listOfTRTIds)
     {
@@ -938,12 +983,12 @@ std::vector<const Trk::PrepRawData*> TrigDvFex::getPRDsfromID(const TrigRoiDescr
             
             for( auto & trthit: * trtcollection )
             {
-                prds_at_roi.push_back(trthit);
-                ++m_trthits_at_roi;
+                //prds_at_roi.push_back(trthit);
+                prds_at_roi.trt.insert(trthit);
             }
         }
     }
-    ATH_MSG_INFO("Number of TRT PRDs at this RoI: " << m_trthits_at_roi);
+    ATH_MSG_DEBUG("Number of TRT PRDs at this RoI: " << prds_at_roi.trt.size());
     ATH_MSG_INFO("Total Number of PRDs at this RoI: " << prds_at_roi.size());
     
     return prds_at_roi;

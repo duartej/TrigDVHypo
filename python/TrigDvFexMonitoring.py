@@ -26,12 +26,6 @@ class TrigDvFexMonitoring(TrigGenericMonitoringToolConfig):
             title="Unused hits at the RoI",xbins=300, xmin=0, xmax=4000) ]
         self.Histograms += [ defineHistogram('roi_unusedhits_fraction', type='TH1F',
             title="Fraction of unused hits at the RoI",xbins=100, xmin=0, xmax=1.0) ]
-        self.Histograms += [ defineHistogram('roi_pixhits', type='TH1F',
-            title="Total hits found at Pixel detector per RoI",xbins=100, xmin=0, xmax=300) ]
-        self.Histograms += [ defineHistogram('roi_scthits', type='TH1F',
-            title="Total hits found at SCT detector per RoI",xbins=300, xmin=0, xmax=500) ]
-        self.Histograms += [ defineHistogram('roi_trthits', type='TH1F',
-            title="Total hits found at TRT detector per RoI",xbins=300, xmin=0, xmax=1000) ]
         
         self.Histograms += [ defineHistogram('roi_deltaEtaTrk', type='TH1F',
             title="Delta eta between the RoI and the HLT track-jet",xbins=100, xmin=-1.0, xmax=1.0) ]

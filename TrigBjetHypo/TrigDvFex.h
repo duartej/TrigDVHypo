@@ -68,6 +68,27 @@ enum class TrigDvFexDet
     TRT   = 3
 };
 
+struct PrdsAtRoI
+{
+    std::unordered_set<const Trk::PrepRawData*> pixel;
+    std::unordered_set<const Trk::PrepRawData*> blayer;
+    std::unordered_set<const Trk::PrepRawData*> sct;
+    std::unordered_set<const Trk::PrepRawData*> trt;
+
+    inline void clear() 
+    {
+        pixel.clear();
+        blayer.clear();
+        sct.clear();
+        trt.clear();
+    };
+
+    inline unsigned int size() const
+    {
+        return (pixel.size()+sct.size()+trt.size());
+    };
+};
+
 /**
  * @brief FEX class for the displaced vertex searches (r_{DV} < 300 mm) to be used 
  *        by subsequent hypothesis algorithm.
@@ -113,6 +134,7 @@ class TrigDvFex: public HLT::FexAlgo
 
         // JDC TESTING --> 
         ServiceHandle<IRegSelSvc>  m_regionSelector;
+        //! hits-related info
         const InDet::SiClusterContainer * m_pixcontainer_v;
         const InDet::SiClusterContainer * m_sctcontainer_v;
         const InDet::TRT_DriftCircleContainer * m_trtcontainer_v;
@@ -134,8 +156,11 @@ class TrigDvFex: public HLT::FexAlgo
         /** @brief To select EF tracks. */
         bool efTrackSel(const xAOD::TrackParticle*&, unsigned int);
 
-        /** @brief Function retrieving the Hits (PrepRawData) found in the inner detector at a given RoI */
-        std::vector<const Trk::PrepRawData*> getPRDsfromID(const TrigRoiDescriptor * roi);
+        /** @brief Function retrieving the Hits (PrepRawData) found in the inner detector at a given RoI 
+         * and also return the element index of the first element of the SCT and TRT, PIXEL is always 0*/
+        /*std::vector<const Trk::PrepRawData*> getPRDsfromID(const TrigRoiDescriptor * roi,
+                std::pair<unsigned int,unsigned int> & sct_trt_indices);*/
+        PrdsAtRoI getPRDsfromID(const TrigRoiDescriptor * roi);
         /** @brief update the Prepared raw data collection for the given event */
         HLT::ErrorCode updatePRDs(const TrigDvFexDet & detectortype);
         
@@ -226,12 +251,6 @@ class TrigDvFex: public HLT::FexAlgo
         float m_unusedhits;
         /** @brief fraction of unused hits from the total hits **/
         float m_unusedhits_fraction;
-        /** @brief number of total hits in the pixel per roi **/
-        float m_pixhits_at_roi;
-        /** @brief number of total hits in the SCT per roi **/
-        float m_scthits_at_roi;
-        /** @brief number of total hits in the TRT per roi **/
-        float m_trthits_at_roi;
 
         /** @brief Delta eta between the LVL1 jet RoI and the EF track-jet. */
         float m_deltaEtaTrk;
